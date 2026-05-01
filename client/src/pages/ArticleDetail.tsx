@@ -100,8 +100,29 @@ export default function ArticleDetail() {
             <span className="badge-category">{data.category}</span>
             <h1 className="editorial-serif mt-4">{data.title}</h1>
             <p className="ui-sans text-xs uppercase tracking-[0.2em] text-[var(--rose-deep)] mt-4">
-              By {data.author} ·{" "}
+              By{" "}
+              <a
+                href="https://theoraclelover.com"
+                target="_blank"
+                rel="noopener"
+                className="underline decoration-[var(--rose-deep)] underline-offset-4"
+              >
+                {data.author}
+              </a>{" "}
+              ·{" "}
               <time dateTime={data.publishedAt || ""}>{fmtDate(data.publishedAt)}</time>
+              {" "}· <span>{data.readingTime} min read</span>
+            </p>
+            <p className="ui-sans text-[11px] tracking-[0.18em] uppercase text-[var(--plum-soft)] mt-2">
+              An editorial from{" "}
+              <a
+                href="https://theoraclelover.com"
+                target="_blank"
+                rel="noopener"
+                className="underline decoration-[var(--rose-deep)] underline-offset-4 text-[var(--rose-deep)]"
+              >
+                The Oracle Lover
+              </a>
             </p>
             <figure className="mt-6 mb-10">
               <img

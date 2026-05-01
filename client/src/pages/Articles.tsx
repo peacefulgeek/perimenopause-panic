@@ -87,8 +87,8 @@ export default function Articles() {
         )}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
           {filtered.map((a) => (
-            <Link key={a.slug} href={`/articles/${a.slug}`} className="no-underline text-[var(--plum-text)]">
-              <article className="editorial-card overflow-hidden h-full flex flex-col">
+            <article key={a.slug} className="editorial-card overflow-hidden h-full flex flex-col text-[var(--plum-text)]">
+              <Link href={`/articles/${a.slug}`} className="no-underline text-[var(--plum-text)] block">
                 <div className="aspect-[4/3]">
                   <img
                     src={a.heroUrl}
@@ -97,16 +97,28 @@ export default function Articles() {
                     loading="lazy"
                   />
                 </div>
-                <div className="p-5 flex-1 flex flex-col">
-                  <span className="badge-category">{a.category}</span>
-                  <h3 className="editorial-serif text-xl mt-3">{a.title}</h3>
-                  <p className="text-sm mt-2 text-[var(--plum-soft)] flex-1">{a.metaDescription}</p>
-                  <div className="ui-sans uppercase text-[10px] tracking-[0.2em] mt-4 text-[var(--rose-deep)]">
-                    {fmtDate(a.publishedAt)}
-                  </div>
+              </Link>
+              <div className="p-5 flex-1 flex flex-col">
+                <span className="badge-category">{a.category}</span>
+                <Link href={`/articles/${a.slug}`} className="no-underline text-[var(--plum-text)]">
+                  <h3 className="editorial-serif text-xl mt-3 hover:text-[var(--rose-deep)] transition-colors">{a.title}</h3>
+                </Link>
+                <p className="text-sm mt-2 text-[var(--plum-soft)] flex-1">{a.metaDescription}</p>
+                <div className="ui-sans uppercase text-[10px] tracking-[0.2em] mt-4 text-[var(--rose-deep)] flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span>By</span>
+                  <a
+                    href="https://theoraclelover.com"
+                    target="_blank"
+                    rel="noopener"
+                    className="underline decoration-[var(--rose-deep)] underline-offset-4"
+                  >
+                    The Oracle Lover
+                  </a>
+                  <span className="opacity-60">·</span>
+                  <span>{fmtDate(a.publishedAt)}</span>
                 </div>
-              </article>
-            </Link>
+              </div>
+            </article>
           ))}
         </div>
       </section>

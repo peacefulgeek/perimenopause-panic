@@ -51,3 +51,9 @@
 - [x] Confirm zero Manus runtime in published HTML: imagery is 100% perimenopause.b-cdn.net, articles bodies have 0 manus-* refs
 - [x] All assets migrated to Bunny CDN (perimenopause.b-cdn.net), nothing left on Manus storage
 - [x] Final §23 report + commit hash + screenshot
+
+## Round 3 — Restore The Oracle Lover presence
+- [x] Visible byline ("By The Oracle Lover" with theoraclelover.com link) on every Article detail page
+- [x] Visible byline link on every Articles list card
+- [x] Rewrite About page so The Oracle Lover has real presence (voice, mission, watercolor portrait, link)
+- [x] Visually verify + checkpoint
