@@ -6,9 +6,9 @@ export default function About() {
       <section className="container py-10">
         <div className="badge-category">About</div>
         <h1 className="editorial-serif mt-4">The Oracle Lover.</h1>
-        <p className="mt-4 max-w-2xl text-[var(--brown-soft)]">
+        <p className="mt-4 max-w-2xl text-[var(--plum-soft)]">
           Perimenopause Panic is the editorial sister site of{" "}
-          <a href="https://theoraclelover.com" rel="noopener" className="text-[var(--terra-deep)]">
+          <a href="https://theoraclelover.com" rel="noopener" className="text-[var(--rose-deep)]">
             theoraclelover.com
           </a>. We write about the hormonal decade nobody warned you about,
           the way we wish someone had written to us. Direct, warm,
@@ -41,8 +41,8 @@ export default function About() {
             </p>
           </div>
           <div className="md:col-span-5 grid grid-cols-2 gap-3">
-            <img src="https://perimenopause-panic.b-cdn.net/library/lib-04.webp" alt="Editorial cream and brown still life" className="aspect-[3/4] object-cover" />
-            <img src="https://perimenopause-panic.b-cdn.net/library/lib-18.webp" alt="Soft natural light through linen" className="aspect-[3/4] object-cover" />
+            <div className="watercolor-frame"><img src="https://perimenopause.b-cdn.net/library/lib-04.webp" alt="Watercolor still life of peonies and rose quartz on cream paper" className="aspect-[3/4] object-cover w-full" /></div>
+            <div className="watercolor-frame"><img src="https://perimenopause.b-cdn.net/library/lib-18.webp" alt="Soft watercolor of dried lavender bouquet on cream paper" className="aspect-[3/4] object-cover w-full" /></div>
           </div>
         </div>
       </section>

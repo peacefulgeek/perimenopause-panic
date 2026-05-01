@@ -37,3 +37,17 @@
 - [x] vitest covering quality gate + redirect + robots/sitemap routes
 - [x] DB queries for word-count, em-dash, EEAT, leakage all return 0
 - [x] Cron runs table shows multi-day publish history
+
+## Round 2 — Redesign + content explosion
+- [ ] Re-palette to cream/rose/mauve/lavender (no brown, no black, no red)
+- [ ] Watercolor texture backgrounds + soft motion + serif/script display type
+- [ ] Generate ~40 watercolor library images (consistent style)
+- [ ] Watercolor hero on EVERY published article
+- [ ] /assessments — 11 nurturing self-assessments with watercolor cards + scoring
+- [ ] /herbs — 200+ herbs/TCM/supplements, watercolor thumbnail, 3-sentence write-up, verified spankyspinola-20 ASIN
+- [ ] Pre-seed 500 QUEUED articles 1,800+ words each in author voice
+- [ ] Verify only ~30 published, rest queued, daily cron will release them
+- [ ] Confirm node-cron in-process, no Manus scheduler dependency
+- [ ] Confirm zero Manus runtime: no /manus-storage/, no manus-cdn, no manus-tide
+- [ ] Migrate any Manus-hosted assets to Bunny CDN (or leave as deterministic Bunny URLs and document that the upload is the only outstanding step)
+- [ ] Final §23 report + commit hash + screenshot

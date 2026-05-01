@@ -15,7 +15,7 @@ function fmtDate(s: string | null): string {
 function ArticleCard({ a, size = "md" }: { a: ArticleSummary; size?: "lg" | "md" | "sm" }) {
   return (
     <article className="editorial-card overflow-hidden">
-      <Link href={`/articles/${a.slug}`} className="no-underline text-[var(--brown)]">
+      <Link href={`/articles/${a.slug}`} className="no-underline text-[var(--plum-text)]">
         <div className={size === "lg" ? "aspect-[16/9]" : size === "sm" ? "aspect-[16/10]" : "aspect-[4/3]"}>
           <img
             src={a.heroUrl}
@@ -28,8 +28,8 @@ function ArticleCard({ a, size = "md" }: { a: ArticleSummary; size?: "lg" | "md"
         <div className="p-5">
           <span className="badge-category">{a.category}</span>
           <h3 className={size === "lg" ? "editorial-serif text-3xl mt-3" : "editorial-serif text-xl mt-3"}>{a.title}</h3>
-          <p className="text-sm mt-2 text-[var(--brown-soft)] leading-snug">{a.metaDescription}</p>
-          <div className="ui-sans uppercase text-[10px] tracking-[0.2em] mt-3 text-[var(--terra-deep)]">
+          <p className="text-sm mt-2 text-[var(--plum-soft)] leading-snug">{a.metaDescription}</p>
+          <div className="ui-sans uppercase text-[10px] tracking-[0.2em] mt-3 text-[var(--rose-deep)]">
             {fmtDate(a.publishedAt)}
           </div>
         </div>
@@ -65,34 +65,43 @@ export default function Home() {
               who are ready to read.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/articles" className="button-editorial">
+              <Link href="/articles" className="btn-soft no-underline">
                 Read the archive
               </Link>
-              <Link href="/tools-we-recommend" className="button-editorial-outline">
-                Tools we recommend
+              <Link href="/assessments" className="btn-ghost no-underline">
+                Soft self check-in
+              </Link>
+              <Link href="/herbs" className="btn-ghost no-underline">
+                Herbs &amp; supplements
               </Link>
             </div>
           </div>
           <div className="lg:col-span-5 grid grid-cols-2 gap-3">
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663309220512/giES5D3NCtGvLGR7vYz5rT/lib-02-57RrBTCHs4zKmEUB5Pavkj.webp"
-              alt="A warm, soft-light still life of a woman's morning routine"
-              className="w-full aspect-[3/4] object-cover"
-              loading="lazy"
-            />
+            <div className="watercolor-frame">
+              <img
+                src="https://perimenopause.b-cdn.net/library/lib-01.webp"
+                alt="Watercolor still life of peonies and rose quartz on cream paper"
+                className="w-full aspect-[3/4] object-cover"
+                loading="lazy"
+              />
+            </div>
             <div className="grid grid-rows-2 gap-3">
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663309220512/giES5D3NCtGvLGR7vYz5rT/lib-07-dGfCAFFDj6gFd3eSf7oFwz.webp"
-                alt="Editorial flat-lay of warm cream textiles and a ceramic mug"
-                className="w-full aspect-[4/3] object-cover"
-                loading="lazy"
-              />
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663309220512/giES5D3NCtGvLGR7vYz5rT/lib-09-kdcwoUNtSqs2yEAudDMTvq.webp"
-                alt="Soft sunlight through linen at the start of the day"
-                className="w-full aspect-[4/3] object-cover"
-                loading="lazy"
-              />
+              <div className="watercolor-frame">
+                <img
+                  src="https://perimenopause.b-cdn.net/library/lib-07.webp"
+                  alt="Soft watercolor of dried lavender bouquet and ceramic teacup on cream paper"
+                  className="w-full aspect-[4/3] object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <div className="watercolor-frame">
+                <img
+                  src="https://perimenopause.b-cdn.net/library/lib-12.webp"
+                  alt="Watercolor wash of soft pink camellia blossoms with gold leaf accents"
+                  className="w-full aspect-[4/3] object-cover"
+                  loading="lazy"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -115,7 +124,7 @@ export default function Home() {
         <section className="container py-10">
           <div className="flex items-end justify-between mb-6">
             <h2 className="editorial-serif text-3xl">From the desk</h2>
-            <Link href="/articles" className="ui-sans text-sm uppercase tracking-[0.2em] no-underline text-[var(--terra-deep)] inline-flex items-center gap-2">
+            <Link href="/articles" className="ui-sans text-sm uppercase tracking-[0.2em] no-underline text-[var(--rose-deep)] inline-flex items-center gap-2">
               All articles <ArrowRight size={16} />
             </Link>
           </div>
@@ -127,12 +136,12 @@ export default function Home() {
 
       {/* Pull quote — site voice */}
       <section className="container py-16">
-        <blockquote className="pull-quote">
+        <blockquote className="pull-quote" style={{background:"linear-gradient(180deg, rgba(244,212,208,0.7), rgba(217,199,225,0.55))", borderLeft:"5px solid var(--rose-deep)", padding:"2rem 2.4rem", borderRadius:"0 24px 24px 0"}}>
           <p className="editorial-serif text-3xl leading-snug max-w-3xl mx-auto">
             “Perimenopause is not a vibe. It is an endocrinology event with a
             twelve-year arc and a tendency to ambush you in the cereal aisle.”
           </p>
-          <div className="ui-sans text-xs uppercase tracking-[0.25em] mt-4 text-center text-[var(--terra-deep)]">
+          <div className="ui-sans text-xs uppercase tracking-[0.25em] mt-4 text-center text-[var(--rose-deep)]">
             The Oracle Lover
           </div>
         </blockquote>

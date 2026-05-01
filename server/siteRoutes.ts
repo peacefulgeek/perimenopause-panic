@@ -13,6 +13,8 @@ import {
 } from "./lib/aeo";
 import { getArticleBySlug, listAllPublishedSlugs, recentCronRuns, publishedDailyCounts, countByStatus } from "./lib/articles";
 import { SITE, publicBaseUrl } from "./lib/siteConfig";
+import { ASSESSMENTS, findAssessment } from "./lib/assessments";
+import { HERBS, findHerb } from "./lib/herbs";
 
 /**
  * Register every editorial site route. Order:
@@ -66,6 +68,42 @@ export function registerSiteRoutes(app: Express): void {
       return;
     }
     res.json(a);
+  });
+
+  app.get("/api/assessments", (_req: Request, res: Response) => {
+    res.json(
+      ASSESSMENTS.map((a) => ({
+        slug: a.slug,
+        title: a.title,
+        oneLiner: a.oneLiner,
+        blurb: a.blurb,
+        imageKey: a.imageKey,
+        estimatedMinutes: a.estimatedMinutes,
+      })),
+    );
+  });
+  app.get("/api/assessments/:slug", (req: Request, res: Response) => {
+    const a = findAssessment(req.params.slug);
+    if (!a) return void res.status(404).json({ error: "not-found" });
+    res.json(a);
+  });
+
+  app.get("/api/herbs", (_req: Request, res: Response) => {
+    res.json(
+      HERBS.map((h) => ({
+        slug: h.slug,
+        name: h.name,
+        latin: h.latin,
+        family: h.family,
+        oneLiner: h.oneLiner,
+        category: h.category,
+      })),
+    );
+  });
+  app.get("/api/herbs/:slug", (req: Request, res: Response) => {
+    const h = findHerb(req.params.slug);
+    if (!h) return void res.status(404).json({ error: "not-found" });
+    res.json(h);
   });
 
   // Diagnostics (used to verify cron + gate + multi-day distribution)
@@ -132,7 +170,7 @@ export function registerSiteRoutes(app: Express): void {
             tldrPreShell(a.tldr),
           ].join("\n");
         }
-      } else if (url === "/" || url === "/articles" || url === "/about" || url === "/tools-we-recommend" || url === "/disclosures" || url === "/privacy" || url === "/contact") {
+      } else if (url === "/" || url === "/articles" || url === "/about" || url === "/tools-we-recommend" || url === "/disclosures" || url === "/privacy" || url === "/contact" || url === "/assessments" || url.startsWith("/assessments/") || url === "/herbs" || url.startsWith("/herbs/")) {
         injection = [
           canonicalLinkFor(url || "/"),
           `<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />`,

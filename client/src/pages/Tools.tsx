@@ -36,7 +36,7 @@ export default function Tools() {
       <section className="container py-10">
         <div className="badge-category">Hormone Health Library</div>
         <h1 className="editorial-serif mt-4">Tools we recommend</h1>
-        <p className="mt-4 max-w-2xl text-[var(--brown-soft)]">
+        <p className="mt-4 max-w-2xl text-[var(--plum-soft)]">
           A short, considered shelf. Books we keep returning to, supplements we
           recommend with caveats, sleep aids that have actually helped, and
           tools that earn their place in a perimenopause toolkit. As an Amazon
@@ -54,12 +54,12 @@ export default function Tools() {
                 href={`https://www.amazon.com/dp/${t.asin}?tag=spankyspinola-20`}
                 rel="nofollow sponsored noopener"
                 target="_blank"
-                className="editorial-card p-5 no-underline text-[var(--brown)] block"
+                className="editorial-card p-5 no-underline text-[var(--plum-text)] block"
               >
                 <span className="badge-category">{cat}</span>
                 <div className="editorial-serif text-lg mt-3">{t.name}</div>
-                <p className="text-sm mt-2 text-[var(--brown-soft)]">{t.blurb}</p>
-                <div className="ui-sans uppercase text-[10px] tracking-[0.2em] mt-4 text-[var(--terra-deep)]">
+                <p className="text-sm mt-2 text-[var(--plum-soft)]">{t.blurb}</p>
+                <div className="ui-sans uppercase text-[10px] tracking-[0.2em] mt-4 text-[var(--rose-deep)]">
                   Read on Amazon (paid link)
                 </div>
               </a>

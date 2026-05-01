@@ -48,7 +48,7 @@ export default function ArticleDetail() {
   if (loading) {
     return (
       <SiteShell>
-        <section className="container py-20 text-[var(--brown-soft)]">Loading article...</section>
+        <section className="container py-20 text-[var(--plum-soft)]">Loading article...</section>
       </SiteShell>
     );
   }
@@ -57,7 +57,7 @@ export default function ArticleDetail() {
       <SiteShell>
         <section className="container py-20">
           <h1 className="editorial-serif text-4xl">Article not found</h1>
-          <p className="mt-4 text-[var(--brown-soft)]">
+          <p className="mt-4 text-[var(--plum-soft)]">
             We could not find that piece. <Link href="/articles">Browse the archive</Link>.
           </p>
         </section>
@@ -68,19 +68,19 @@ export default function ArticleDetail() {
   return (
     <SiteShell>
       <article className="container py-10">
-        <Link href="/articles" className="ui-sans text-xs tracking-[0.2em] uppercase no-underline text-[var(--terra-deep)] inline-flex items-center gap-2 mb-6">
+        <Link href="/articles" className="ui-sans text-xs tracking-[0.2em] uppercase no-underline text-[var(--rose-deep)] inline-flex items-center gap-2 mb-6">
           <ArrowLeft size={14} /> All articles
         </Link>
         <div className="grid lg:grid-cols-12 gap-10">
           {/* Sticky TOC */}
           <aside className="lg:col-span-3 order-2 lg:order-1">
             <div className="lg:sticky lg:top-6">
-              <div className="ui-sans uppercase text-xs tracking-[0.2em] text-[var(--brown-soft)] mb-3">
+              <div className="ui-sans uppercase text-xs tracking-[0.2em] text-[var(--plum-soft)] mb-3">
                 In this article
               </div>
-              <nav className="border-l border-[var(--brown)] pl-3">
+              <nav className="border-l border-[var(--plum-text)] pl-3">
                 {toc.length === 0 ? (
-                  <span className="text-xs text-[var(--brown-soft)]">Sections will appear as you scroll.</span>
+                  <span className="text-xs text-[var(--plum-soft)]">Sections will appear as you scroll.</span>
                 ) : (
                   toc.map((t) => (
                     <a key={t.id} href={`#${t.id}`} className="toc-link">{t.text}</a>
@@ -88,10 +88,10 @@ export default function ArticleDetail() {
                 )}
               </nav>
               <div className="rule h-px my-6" />
-              <div className="ui-sans uppercase text-xs tracking-[0.2em] text-[var(--brown-soft)] mb-3">
+              <div className="ui-sans uppercase text-xs tracking-[0.2em] text-[var(--plum-soft)] mb-3">
                 Reading time
               </div>
-              <p className="text-sm text-[var(--brown)]">{data.readingTime} min</p>
+              <p className="text-sm text-[var(--plum-text)]">{data.readingTime} min</p>
             </div>
           </aside>
 
@@ -99,7 +99,7 @@ export default function ArticleDetail() {
           <div className="lg:col-span-9 order-1 lg:order-2">
             <span className="badge-category">{data.category}</span>
             <h1 className="editorial-serif mt-4">{data.title}</h1>
-            <p className="ui-sans text-xs uppercase tracking-[0.2em] text-[var(--terra-deep)] mt-4">
+            <p className="ui-sans text-xs uppercase tracking-[0.2em] text-[var(--rose-deep)] mt-4">
               By {data.author} ·{" "}
               <time dateTime={data.publishedAt || ""}>{fmtDate(data.publishedAt)}</time>
             </p>
@@ -107,9 +107,9 @@ export default function ArticleDetail() {
               <img
                 src={data.heroUrl}
                 alt={data.imageAlt}
-                className="w-full aspect-[16/9] object-cover border border-[var(--brown)]"
+                className="w-full aspect-[16/9] object-cover border border-[var(--plum-text)]"
               />
-              <figcaption className="ui-sans text-xs uppercase tracking-[0.18em] mt-2 text-[var(--brown-soft)]">
+              <figcaption className="ui-sans text-xs uppercase tracking-[0.18em] mt-2 text-[var(--plum-soft)]">
                 {data.imageAlt}
               </figcaption>
             </figure>
@@ -121,14 +121,14 @@ export default function ArticleDetail() {
             />
 
             {related.length > 0 && (
-              <section className="mt-16 pt-10 border-t border-[var(--brown)]">
+              <section className="mt-16 pt-10 border-t border-[var(--plum-text)]">
                 <h2 className="editorial-serif text-2xl mb-4">More from {data.category}</h2>
                 <div className="grid md:grid-cols-2 gap-5">
                   {related.map((r) => (
-                    <Link key={r.slug} href={`/articles/${r.slug}`} className="editorial-card p-4 no-underline text-[var(--brown)]">
+                    <Link key={r.slug} href={`/articles/${r.slug}`} className="editorial-card p-4 no-underline text-[var(--plum-text)]">
                       <div className="badge-category">{r.category}</div>
                       <h3 className="editorial-serif text-lg mt-2">{r.title}</h3>
-                      <p className="text-sm mt-2 text-[var(--brown-soft)]">{r.metaDescription}</p>
+                      <p className="text-sm mt-2 text-[var(--plum-soft)]">{r.metaDescription}</p>
                     </Link>
                   ))}
                 </div>

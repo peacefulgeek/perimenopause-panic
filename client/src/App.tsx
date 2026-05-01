@@ -12,6 +12,10 @@ import About from "./pages/About";
 import Privacy from "./pages/Privacy";
 import Disclosures from "./pages/Disclosures";
 import Contact from "./pages/Contact";
+import Assessments from "./pages/Assessments";
+import AssessmentDetail from "./pages/AssessmentDetail";
+import Herbs from "./pages/Herbs";
+import HerbDetail from "./pages/HerbDetail";
 
 function Router() {
   return (
@@ -24,6 +28,10 @@ function Router() {
       <Route path="/privacy" component={Privacy} />
       <Route path="/disclosures" component={Disclosures} />
       <Route path="/contact" component={Contact} />
+      <Route path="/assessments" component={Assessments} />
+      <Route path="/assessments/:slug" component={AssessmentDetail} />
+      <Route path="/herbs" component={Herbs} />
+      <Route path="/herbs/:slug" component={HerbDetail} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
