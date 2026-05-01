@@ -147,9 +147,9 @@ export function runQualityGate(input: {
     failures.push({ rule: "eeat-missing-external-authoritative" });
   }
 
-  // 11. Amazon links 3-4 with the affiliate tag
+  // 11. Amazon links 3-4 with the affiliate tag (legacy /dp/ OR current /s? form)
   const amazonMatches =
-    body.match(/href=["']https?:\/\/www\.amazon\.com\/dp\/[A-Z0-9]+\?tag=spankyspinola-20/g) || [];
+    body.match(/href=["']https?:\/\/www\.amazon\.com\/(?:dp\/[A-Z0-9]+\?tag=spankyspinola-20|s\?k=[^"']+&(?:amp;)?tag=spankyspinola-20)/g) || [];
   if (amazonMatches.length < 3 || amazonMatches.length > 4) {
     failures.push({
       rule: "amazon-links-out-of-range",

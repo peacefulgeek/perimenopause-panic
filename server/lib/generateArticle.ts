@@ -51,7 +51,7 @@ function hardRulesPrompt(opts: {
   const productLines = opts.products
     .map(
       (p) =>
-        `- ${p.name} (ASIN ${p.asin}) — ${p.category}: https://www.amazon.com/dp/${p.asin}?tag=${SITE.amazonTag}`,
+        `- ${p.name} (ASIN ${p.asin}) — ${p.category}: https://www.amazon.com/s?k=${encodeURIComponent(p.name)}&tag=${SITE.amazonTag}`,
     )
     .join("\n");
   const relatedLines = opts.related
@@ -83,7 +83,7 @@ STRUCTURE (top to bottom, exactly):
 5. THREE Amazon affiliate <a> tags with rel="nofollow sponsored noopener"
    target="_blank", each followed in plain text by "(paid link)". Use ONLY
    the products in the AVAILABLE PRODUCTS list. Format URL exactly:
-   https://www.amazon.com/dp/[ASIN]?tag=${SITE.amazonTag}
+   https://www.amazon.com/s?k=[URL-ENCODED PRODUCT NAME]&tag=${SITE.amazonTag}
 6. THREE internal links to other articles on this site, woven into prose
    with varied anchor text. Use the slugs in INTERNAL LINK CANDIDATES below.
    Anchor format: <a href="/articles/<slug>">descriptive anchor text</a>.
@@ -195,7 +195,13 @@ Rewrite the article from scratch obeying every HARD RULE above.`;
 
   const asinsUsed = Array.from(
     new Set(
-      Array.from(body.matchAll(/amazon\.com\/dp\/([A-Z0-9]+)/g)).map((m) => m[1]),
+      // Capture both legacy /dp/{ASIN} links and the current /s?k=NAME form
+      // (we record the URL-encoded product name as the "asin" for the search
+      // form, since search links don't carry an ASIN).
+      [
+        ...Array.from(body.matchAll(/amazon\.com\/dp\/([A-Z0-9]+)/g)).map((m) => m[1]),
+        ...Array.from(body.matchAll(/amazon\.com\/s\?k=([^&"]+)/g)).map((m) => decodeURIComponent(m[1])),
+      ],
     ),
   );
   const internalLinksUsed = Array.from(

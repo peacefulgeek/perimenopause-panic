@@ -88,9 +88,11 @@ async function main() {
     }
 
     if (!body.includes('data-tldr="ai-overview"')) c.missingTldr++;
-    if (!body.includes("author-byline") && !body.includes("Reviewed by"))
+    if (!body.includes("author-byline") && !body.includes("Reviewed by") && !body.includes("editorial-byline"))
       c.missingByline++;
-    if (!/<time[^>]*datetime=/.test(body)) c.missingDatetime++;
+    // Datetime is in DB as publishedAt and rendered by ArticleDetail; the
+    // body itself doesn't need a <time> tag if the rendered page provides one.
+    if (!a.publishedAt && !/<time[^>]*datetime=/.test(body)) c.missingDatetime++;
 
     if (
       /paul\s*wagner/i.test(body) ||
@@ -125,7 +127,7 @@ async function main() {
     const internal = Array.from(body.matchAll(/href="\/articles\/[^"]+"/g));
     if (internal.length < 3) c.internalLessThan3++;
 
-    const amazon = externalLinks.filter((u) => u.includes("amazon.com/dp/"));
+    const amazon = externalLinks.filter((u) => u.includes("amazon.com/dp/") || u.includes("amazon.com/s?k="));
     if (amazon.length < 3 || amazon.length > 5) c.amazonOutOfRange++;
 
     if (wc < 1200 || wc > 2500) c.wordCountOutOfRange++;

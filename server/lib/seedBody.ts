@@ -138,9 +138,9 @@ export function buildSeedArticle(
     {
       h2: "What the products in your cart can and cannot do",
       paras: [
-        `Reading is the cheapest, highest-yield move. Start with <a href="https://www.amazon.com/dp/${products[0].asin}?tag=${SITE.amazonTag}" rel="nofollow sponsored noopener" target="_blank">${products[0].name}</a> (paid link). It will save you a year of guessing.`,
-        `If sleep is the symptom that broke you, <a href="https://www.amazon.com/dp/${products[1].asin}?tag=${SITE.amazonTag}" rel="nofollow sponsored noopener" target="_blank">${products[1].name}</a> (paid link) does an honest job. It is not a hormone replacement, but it removes a confounder.`,
-        `For the lab piece, consider <a href="https://www.amazon.com/dp/${products[2].asin}?tag=${SITE.amazonTag}" rel="nofollow sponsored noopener" target="_blank">${products[2].name}</a> (paid link) as a starting panel only. A single FSH on the wrong cycle day still proves nothing.`,
+        `Reading is the cheapest, highest-yield move. Start with <a href="https://www.amazon.com/s?k=${encodeURIComponent(products[0].name + ' supplement')}&tag=${SITE.amazonTag}" rel="nofollow sponsored noopener" target="_blank">${products[0].name}</a> (paid link). It will save you a year of guessing.`,
+        `If sleep is the symptom that broke you, <a href="https://www.amazon.com/s?k=${encodeURIComponent(products[1].name + ' supplement')}&tag=${SITE.amazonTag}" rel="nofollow sponsored noopener" target="_blank">${products[1].name}</a> (paid link) does an honest job. It is not a hormone replacement, but it removes a confounder.`,
+        `For the lab piece, consider <a href="https://www.amazon.com/s?k=${encodeURIComponent(products[2].name + ' supplement')}&tag=${SITE.amazonTag}" rel="nofollow sponsored noopener" target="_blank">${products[2].name}</a> (paid link) as a starting panel only. A single FSH on the wrong cycle day still proves nothing.`,
       ],
     },
     {

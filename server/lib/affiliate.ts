@@ -174,6 +174,20 @@ export function matchProducts(opts: {
   return picks.slice(0, Math.max(opts.minLinks, Math.min(opts.maxLinks, picks.length)));
 }
 
-export function amazonUrl(asin: string): string {
-  return `https://www.amazon.com/dp/${asin}?tag=${SITE.amazonTag}`;
+/**
+ * Amazon link generator. We use search URLs (`/s?k=`) instead of
+ * deep ASIN deep-links because (a) ASIN pages decay over time and many of
+ * our speculative ASINs no longer resolve to a live SKU, while (b) every
+ * search URL with our `tag` produces a real, populated, affiliate-credited
+ * results page for the named product. The ASIN is retained in the catalog
+ * for analytics and future API-based product lookups.
+ */
+export function amazonUrl(asinOrName: string, productName?: string): string {
+  const q = productName ?? asinOrName;
+  const search = encodeURIComponent(q + " supplement");
+  return `https://www.amazon.com/s?k=${search}&tag=${SITE.amazonTag}`;
+}
+
+export function amazonProductUrl(p: { asin: string; name: string }): string {
+  return amazonUrl(p.asin, p.name);
 }

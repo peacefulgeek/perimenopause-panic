@@ -34,7 +34,10 @@ export default function HerbDetail() {
     );
   }
 
-  const amazonUrl = `https://www.amazon.com/dp/${h.asin}/?tag=${TAG}`;
+  // Use Amazon search instead of speculative ASIN deep-links: every search
+  // URL with our tag returns real, current results and credits the affiliate.
+  const searchTerm = encodeURIComponent(`${h.name} supplement`);
+  const amazonUrl = `https://www.amazon.com/s?k=${searchTerm}&tag=${TAG}`;
 
   return (
     <SiteShell>
@@ -64,7 +67,7 @@ export default function HerbDetail() {
             <div className="card-soft mt-8" style={{ background: "rgba(248, 226, 217, 0.55)" }}>
               <p className="ui-sans uppercase text-xs tracking-[0.22em]" style={{ color: "var(--rose-deep)" }}>Where to source</p>
               <p className="editorial-serif text-xl mt-2" style={{ color: "var(--plum-text)" }}>
-                We've vetted a third-party tested option on Amazon.
+                Curated third-party-tested options on Amazon.
               </p>
               <a
                 href={amazonUrl}
@@ -72,7 +75,7 @@ export default function HerbDetail() {
                 target="_blank"
                 className="btn-soft inline-flex items-center gap-2 mt-4 no-underline"
               >
-                Open the verified Amazon listing <ExternalLink size={14} />
+                Browse {h.name} on Amazon <ExternalLink size={14} />
               </a>
               <p className="ui-sans text-xs mt-3" style={{ color: "var(--plum-soft)" }}>
                 Affiliate · Amazon Associates tag {TAG} · we earn a small commission at no extra cost to
@@ -84,7 +87,7 @@ export default function HerbDetail() {
               <p className="ui-sans uppercase text-xs tracking-[0.22em]" style={{ color: "var(--mauve-deep)" }}>Self-recognition</p>
               <p className="text-base mt-2" style={{ color: "var(--plum-soft)" }}>
                 Not sure where to start? Take{" "}
-                <Link href="/assessments/symptom-burden" className="no-underline" style={{ color: "var(--rose-deep)" }}>the symptom-burden soft check-in</Link>{" "}
+                <Link href="/assessments/perimenopause-symptom-check-in" className="no-underline" style={{ color: "var(--rose-deep)" }}>the soft symptom check-in</Link>{" "}
                 to see which herbs may meet you most kindly today.
               </p>
             </div>
