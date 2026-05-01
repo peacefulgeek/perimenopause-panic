@@ -1,5 +1,27 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1777593103058,
+      "tag": "0000_noisy_human_fly",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1777593294691,
+      "tag": "0001_spooky_exiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1777593312826,
+      "tag": "0002_clear_mysterio",
+      "breakpoints": true
+    }
+  ]
 }

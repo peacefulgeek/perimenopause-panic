@@ -1,0 +1,1 @@
+ALTER TABLE `articles` MODIFY COLUMN `body` longtext NOT NULL;

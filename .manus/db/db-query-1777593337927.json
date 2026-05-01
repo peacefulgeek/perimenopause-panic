@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `cron_runs` (`id` int AUTO_INCREMENT NOT NULL, `job` varchar(80) NOT NULL, `status` enum('ok','skipped','error') NOT NULL, `message` text, `payload` json, `ran_at` timestamp NOT NULL DEFAULT (now()), CONSTRAINT `cron_runs_id` PRIMARY KEY(`id`)); CREATE INDEX `status_idx` ON `articles` (`status`); CREATE INDEX `published_at_idx` ON `articles` (`published_at`);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2tKWhLLrm4qtwFR.a86ae6d39ff1 --database giES5D3NCtGvLGR7vYz5rT --execute CREATE TABLE `cron_runs` (`id` int AUTO_INCREMENT NOT NULL, `job` varchar(80) NOT NULL, `status` enum('ok','skipped','error') NOT NULL, `message` text, `payload` json, `ran_at` timestamp NOT NULL DEFAULT (now()), CONSTRAINT `cron_runs_id` PRIMARY KEY(`id`)); CREATE INDEX `status_idx` ON `articles` (`status`); CREATE INDEX `published_at_idx` ON `articles` (`published_at`);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 488
+}
