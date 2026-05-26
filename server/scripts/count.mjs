@@ -1,0 +1,11 @@
+import mysql from 'mysql2/promise';
+const c = await mysql.createConnection(process.env.DATABASE_URL);
+const [byStatus] = await c.query("SELECT status, COUNT(*) AS n FROM articles GROUP BY status");
+console.log("STATUS COUNTS:", byStatus);
+const [pubRange] = await c.query("SELECT MIN(published_at) AS oldest, MAX(published_at) AS newest FROM articles WHERE status='published'");
+console.log("PUBLISHED RANGE:", pubRange);
+const [perDay] = await c.query("SELECT DATE(published_at) AS d, COUNT(*) AS n FROM articles WHERE status='published' GROUP BY DATE(published_at) ORDER BY d");
+console.log("PUBLISHED PER DAY (last 10):");
+for (const r of perDay.slice(-10)) console.log("  ", r.d, r.n);
+console.log("  ... " + perDay.length + " total days");
+await c.end();

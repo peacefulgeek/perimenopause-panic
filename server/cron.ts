@@ -16,6 +16,14 @@ import { runQualityGate } from "./lib/qualityGate";
 const AUTO_GEN = (process.env.AUTO_GEN_ENABLED || "true").toLowerCase() === "true";
 const TZ = "UTC";
 
+/**
+ * Hard ceiling on published articles. Once reached, the publisher stops
+ * releasing queued items and stops generating fresh content. Refresh,
+ * spotlight, and ASIN-health crons keep running so SEO signals remain warm.
+ * Override via env PUBLISHED_CAP if you ever want to lift the gate.
+ */
+export const PUBLISHED_CAP = parseInt(process.env.PUBLISHED_CAP || "100", 10);
+
 let started = false;
 
 /**
@@ -94,6 +102,10 @@ export async function runPublisher(allowedPhase: 1 | 2): Promise<{
 }> {
   const counts = await countByStatus();
   const publishedCount = counts.published || 0;
+  // Hard cap. Stop publishing once the corpus reaches the configured ceiling.
+  if (publishedCount >= PUBLISHED_CAP) {
+    return { acted: false, reason: `published-cap-reached:${publishedCount}/${PUBLISHED_CAP}` };
+  }
   const phase: 1 | 2 = publishedCount < 60 ? 1 : 2;
   if (phase !== allowedPhase) {
     return { acted: false, reason: `current-phase-${phase}-skip-slot-${allowedPhase}` };

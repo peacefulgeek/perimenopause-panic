@@ -57,3 +57,14 @@
 - [x] Visible byline link on every Articles list card
 - [x] Rewrite About page so The Oracle Lover has real presence (voice, mission, watercolor portrait, link)
 - [x] Visually verify + checkpoint
+
+## Round 4 — Railway-ready + 100-publish cap
+- [ ] Audit current published count
+- [ ] Cap published at 100 in DB (move overflow back to queued, oldest-first stays published)
+- [ ] Enforce 100-cap in `runPublisher` cron so it cannot exceed 100 published rows
+- [ ] Procfile + railway.json
+- [ ] Dockerfile that builds + runs the dist/index.js
+- [ ] Verify port-binding reads `process.env.PORT`
+- [ ] Healthcheck path documented
+- [ ] Env contract documented (DATABASE_URL, OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL, AUTO_GEN_ENABLED, BUNNY_*, JWT_SECRET, etc.)
+- [ ] Tests pass; production build passes; final checkpoint
