@@ -1,6 +1,7 @@
 import { getDb } from "../db";
 import { articles } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { SITE } from "../lib/siteConfig";
 
 /**
  * Replace every <a href="https://www.amazon.com/dp/{ASIN}/?tag=...">{TEXT}</a>
@@ -13,7 +14,7 @@ async function main() {
   if (!db) throw new Error("no db");
 
   const all = await db.select().from(articles);
-  const TAG = "spankyspinola-20";
+  const TAG = SITE.amazonTag;
   let totalSwaps = 0;
 
   for (const a of all) {

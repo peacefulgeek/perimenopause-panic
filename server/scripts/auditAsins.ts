@@ -3,14 +3,16 @@ import { HERBS } from "../lib/herbs";
 /**
  * Verify every herb ASIN resolves to a real Amazon product page.
  *
- * We do a HEAD on https://www.amazon.com/dp/{ASIN}/?tag=spankyspinola-20
+ * We do a HEAD on https://www.amazon.com/dp/{ASIN}/?tag={SITE.amazonTag}
  * and accept 200/301/302 as "live". Anything else is flagged.
  *
  * Note: Amazon often returns 503 to bot user agents. We retry with a
  * desktop user agent and only flag persistent non-2xx/3xx after 2 tries.
  */
 
-const TAG = "spankyspinola-20";
+import { SITE } from "../lib/siteConfig";
+
+const TAG = SITE.amazonTag;
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15";
 

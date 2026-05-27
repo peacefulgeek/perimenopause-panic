@@ -2,9 +2,11 @@
  * One-shot backfill: walk every published article in the DB and upload it
  * to Bunny CDN as articles/<slug>.json. Idempotent — safe to re-run.
  *
- * Requires BUNNY_API_KEY in env. In dev, the key is auto-loaded from
- * /home/ubuntu/.bunny-perimenopause by db.ts on startup; this script
- * inherits that env via dotenv.
+ * Requires BUNNY_API_KEY in env. If the env var is missing in dev, this
+ * script tries one local fallback: it reads /home/ubuntu/.bunny-perimenopause
+ * (a `KEY=value` file used only inside the dev sandbox) and copies the value
+ * into process.env. Production deployments must set BUNNY_API_KEY directly
+ * via the platform's secrets store.
  */
 import "dotenv/config";
 import { listPublishedArticles } from "../lib/articles";

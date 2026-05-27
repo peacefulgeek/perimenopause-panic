@@ -4,6 +4,13 @@
  * signals, EEAT signals (TL;DR, byline, datetime, internal links, external
  * authoritative link, self-reference).
  */
+import { SITE } from "./siteConfig";
+
+/** Escape a string so it can be embedded in a RegExp safely. */
+function escapeRe(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+const AMAZON_TAG_RE = escapeRe(SITE.amazonTag);
 export const AI_FLAGGED_WORDS: string[] = [
   "delve",
   "tapestry",
@@ -148,8 +155,11 @@ export function runQualityGate(input: {
   }
 
   // 11. Amazon links 3-4 with the affiliate tag (legacy /dp/ OR current /s? form)
-  const amazonMatches =
-    body.match(/href=["']https?:\/\/www\.amazon\.com\/(?:dp\/[A-Z0-9]+\?tag=spankyspinola-20|s\?k=[^"']+&(?:amp;)?tag=spankyspinola-20)/g) || [];
+  const amazonRe = new RegExp(
+    `href=["']https?:\\/\\/www\\.amazon\\.com\\/(?:dp\\/[A-Z0-9]+\\?tag=${AMAZON_TAG_RE}|s\\?k=[^"']+&(?:amp;)?tag=${AMAZON_TAG_RE})`,
+    "g",
+  );
+  const amazonMatches = body.match(amazonRe) || [];
   if (amazonMatches.length < 3 || amazonMatches.length > 4) {
     failures.push({
       rule: "amazon-links-out-of-range",

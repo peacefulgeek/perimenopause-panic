@@ -1,6 +1,6 @@
 # Deploying Perimenopause Panic to Railway
 
-This project deploys to Railway using **Railpack** (Railway's default builder). There is intentionally no Dockerfile and no `nixpacks.toml` — both caused builder conflicts in earlier rounds (Nixpacks injecting Caddy in front of Express, Dockerfile `CMD` vs `startCommand` ambiguity, and stale build caches). `railway.json` only sets a `startCommand`; Railpack auto-detects Node + pnpm from `package.json` (which pins `pnpm@10.4.1`). `Procfile` is retained as a fallback for Heroku-style platforms.
+This project deploys to Railway using **Railpack** (Railway's default builder). There is intentionally no Dockerfile and no `nixpacks.toml` — both caused builder conflicts in earlier rounds (Nixpacks injecting Caddy in front of Express, Dockerfile `CMD` vs `startCommand` ambiguity, and stale build caches). `railway.json` only sets a `startCommand`; Railpack auto-detects Node + pnpm from `package.json` (which pins `pnpm@10.4.1`). `Procfile` is retained as a harmless fallback for Heroku-style PaaS providers (Railway/Railpack ignore it; only `railway.json`'s `startCommand` is honored).
 
 ## 1. Create the service
 
@@ -64,7 +64,7 @@ pnpm tsx server/scripts/seed.ts
 pnpm tsx server/scripts/seed500.ts
 ```
 
-That will populate the 30 published articles, the 500 queued placeholders, and the 60-day backfilled cron history.
+That will populate the initial 30 published articles, the 500 queued placeholders, and the 60-day backfilled cron history. The publisher cron will then continue to release queued items on its schedule (see §7), so the live counts will drift upward over time — at the time of this writing the live DB holds 33 published and 497 queued.
 
 ## 5. Wire the domain
 
@@ -76,12 +76,12 @@ In the app service **Settings → Networking → Custom Domain**, add `perimenop
 - `https://www.perimenopausepanic.com/anything` → 301 to `https://perimenopausepanic.com/anything`
 - `https://perimenopausepanic.com/sitemap.xml` → lists 7 static URLs + every published article slug
 - `https://perimenopausepanic.com/robots.txt` → allows GPTBot, ClaudeBot, PerplexityBot, Google-Extended
-- `https://perimenopausepanic.com/api/articles` → 30 published articles
+- `https://perimenopausepanic.com/api/articles` → every published article (33+ at time of writing; grows over time as the cron releases queued items)
 - `https://perimenopausepanic.com/api/diagnostics` → cron history with multi-day distribution
 - `https://perimenopause.b-cdn.net/articles/<slug>.json` → each published article is mirrored as a static JSON artifact on Bunny (auto-uploaded by the publisher cron, plus a one-shot `pnpm tsx server/scripts/backfillArticleJson.ts` to refresh the whole corpus on demand)
 
 ## 7. Publishing throughput
 
-The 100-article cap has been removed. By default `PUBLISHED_CAP` is unset and the publisher runs without a ceiling, releasing one queued article per scheduled slot for as long as the queue has items (currently 500 queued behind the 30 published). Today's schedule is five fires per day in phase 1 (07:00, 10:00, 13:00, 16:00, 19:00 UTC) and once weekday at 08:00 UTC in phase 2 — the corpus crosses into phase 2 at 60 published articles.
+The 100-article cap has been removed. By default `PUBLISHED_CAP` is unset and the publisher runs without a ceiling, releasing one queued article per scheduled slot for as long as the queue has items (the queue started at 500; live counts drift over time as the cron releases items). Today's schedule is five fires per day in phase 1 (07:00, 10:00, 13:00, 16:00, 19:00 UTC) and once weekday at 08:00 UTC in phase 2 — the corpus crosses into phase 2 at 60 published articles.
 
 If you ever need to throttle again, set `PUBLISHED_CAP` to a positive integer in Railway Variables. The cron checks `Number.isFinite(PUBLISHED_CAP)` before enforcing it, so the env-driven cap is fully optional.
