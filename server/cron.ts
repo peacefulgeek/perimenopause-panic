@@ -14,6 +14,7 @@ import { ARTICLE_BLUEPRINTS } from "./lib/blueprints";
 import { runQualityGate } from "./lib/qualityGate";
 import { uploadArticleJson } from "./lib/articleJson";
 import { getArticleBySlug } from "./lib/articles";
+import { bunnyPublishNext } from "./lib/bunnyPublisher";
 
 const AUTO_GEN = (process.env.AUTO_GEN_ENABLED || "true").toLowerCase() === "true";
 const TZ = "UTC";
@@ -89,15 +90,23 @@ export function startCronRunner(): void {
 async function safeRun(job: string, fn: () => Promise<unknown>) {
   try {
     const out = await fn();
-    await recordCronRun({ job, status: "ok", message: null, payload: (out as any) ?? null });
+    if (process.env.DATABASE_URL) {
+      await recordCronRun({ job, status: "ok", message: null, payload: (out as any) ?? null });
+    } else {
+      console.log(`[cron] ${job} ok (bunny-only)`, out);
+    }
   } catch (e: any) {
     console.error(`[cron] ${job} failed:`, e);
-    await recordCronRun({
-      job,
-      status: "error",
-      message: String(e?.message || e),
-      payload: null,
-    });
+    if (process.env.DATABASE_URL) {
+      try {
+        await recordCronRun({
+          job,
+          status: "error",
+          message: String(e?.message || e),
+          payload: null,
+        });
+      } catch {}
+    }
   }
 }
 
@@ -106,6 +115,15 @@ export async function runPublisher(allowedPhase: 1 | 2): Promise<{
   reason?: string;
   publishedSlug?: string;
 }> {
+  // Bunny-only mode: when DATABASE_URL is unset (Railway runtime) we mutate
+  // articles/index.json + articles/<slug>.json directly on Bunny instead of
+  // touching a DB. The phase gate still applies, computed from the Bunny
+  // counts in the index.
+  if (!process.env.DATABASE_URL) {
+    const r = await bunnyPublishNext();
+    if (!r.ok) return { acted: false, reason: r.reason ?? "bunny-publish-failed" };
+    return { acted: true, publishedSlug: r.publishedSlug ?? undefined };
+  }
   const counts = await countByStatus();
   const publishedCount = counts.published || 0;
   // Optional cap. Only enforced when PUBLISHED_CAP is a finite number (the

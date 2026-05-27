@@ -1,6 +1,6 @@
 import type { Article } from "../../drizzle/schema";
 import { SITE, publicBaseUrl } from "./siteConfig";
-import { listAllPublishedSlugs } from "./articles";
+import { listPublishedFromBunny } from "./articleStore";
 
 export function buildRobotsTxt(): string {
   const apex = publicBaseUrl().replace(/\/$/, "");
@@ -37,7 +37,7 @@ Sitemap: ${apex}/sitemap.xml
 
 export async function buildSitemapXml(): Promise<string> {
   const apex = publicBaseUrl().replace(/\/$/, "");
-  const articles = await listAllPublishedSlugs();
+  const articles = await listPublishedFromBunny();
   const staticPages = [
     { loc: `${apex}/`, priority: 1.0, changefreq: "daily" },
     { loc: `${apex}/articles`, priority: 0.9, changefreq: "daily" },
@@ -68,7 +68,7 @@ ${urls}
 
 export async function buildLlmsTxt(): Promise<string> {
   const apex = publicBaseUrl().replace(/\/$/, "");
-  const articles = await listAllPublishedSlugs();
+  const articles = await listPublishedFromBunny();
   const lines: string[] = [];
   lines.push(`# ${SITE.name}`);
   lines.push("");
@@ -127,7 +127,20 @@ export function stripHtml(html: string): string {
     .trim();
 }
 
-export function articleJsonLd(a: Article): string {
+export type ArticleLike = {
+  slug: string;
+  title: string;
+  metaDescription: string;
+  heroUrl: string;
+  publishedAt?: Date | string | null;
+  lastModifiedAt?: Date | string | null;
+  tags?: string[];
+  category: string;
+  wordCount: number;
+  author: string | { name: string; site?: string; title?: string };
+};
+
+export function articleJsonLd(a: ArticleLike): string {
   const apex = publicBaseUrl().replace(/\/$/, "");
   const url = `${apex}/articles/${a.slug}`;
   const datePublished = a.publishedAt
@@ -147,8 +160,11 @@ export function articleJsonLd(a: Article): string {
     dateModified,
     author: {
       "@type": "Person",
-      name: a.author,
-      url: SITE.authorSite,
+      name: typeof a.author === "string" ? a.author : a.author?.name ?? SITE.authorName,
+      url:
+        typeof a.author === "string"
+          ? SITE.authorSite
+          : a.author?.site ?? SITE.authorSite,
     },
     publisher: {
       "@type": "Organization",

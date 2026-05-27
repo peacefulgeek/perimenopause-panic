@@ -94,3 +94,20 @@
 - [x] pnpm test passes (46/46); pnpm build clean
 - [x] webdev_save_checkpoint
 - [x] Force-push to peacefulgeek/perimenopause-panic main and report SHA
+## Round 9 — Bunny-only article runtime, zero DB on public path
+- [x] New `server/lib/articleStore.ts` — Bunny-only reader (in-memory cache, 5-min refresh)
+- [x] Rewire `server/siteRoutes.ts` to use `listPublishedFromBunny` and `getArticleFromBunny` instead of DB
+- [x] Widen `articleJsonLd` type in `server/lib/aeo.ts` to accept both DB Article and StoredArticle
+- [x] Export all 530 sandbox-DB articles to Bunny (30 published + 500 queued) and rebuild `articles/index.json`
+- [x] New `server/lib/bunnyPublisher.ts` — Bunny-only cron primitive, no DB
+- [x] Wire `server/cron.ts` to use Bunny publisher when DATABASE_URL is absent (Railway path)
+- [x] Harden `bunnyPublishNext` to ONLY promote queued slugs whose per-slug JSON has body+heroUrl+wordCount≥200
+- [x] New `server/scripts/repairBunnyMirror.ts` — demote any already-promoted placeholder back to queued
+- [x] Run repair: 4 placeholders demoted, index now 30 published / 500 queued
+- [x] tsc clean, 62/62 vitest pass, production build clean
+- [x] Push to GitHub (peacefulgeek/perimenopause-panic main)
+- [ ] Follow-up content work (NOT blocking architecture push):
+  - [ ] Regenerate published articles to >= 1800 words (currently 1354-1376)
+  - [ ] Generate unique custom hero image per article (currently 30 articles share 15 library images)
+  - [ ] Run live ASIN verification from user's laptop via `scripts/asin/run.mjs`
+

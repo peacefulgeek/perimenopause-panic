@@ -74,7 +74,9 @@ describe("Round-7 audit fixes", () => {
       "utf8",
     );
     expect(src).toMatch(/app\.get\(["']\/api\/articles["']/);
-    expect(src).toMatch(/listAllPublishedSlugs/);
+    // Bunny-only refactor: list source is the Bunny CDN store, not the database.
+    expect(src).toMatch(/articleStore/);
+    expect(src).toMatch(/listPublishedFromBunny/);
     expect(src).toMatch(/res\.json\(list\)/);
   });
 });

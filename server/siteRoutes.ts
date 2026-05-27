@@ -11,7 +11,14 @@ import {
   tldrPreShell,
   escapeHtml,
 } from "./lib/aeo";
-import { getArticleBySlug, listAllPublishedSlugs, recentCronRuns, publishedDailyCounts, countByStatus } from "./lib/articles";
+import {
+  listPublishedFromBunny,
+  getArticleFromBunny,
+  countByStatusFromBunny,
+  type IndexEntry,
+  type StoredArticle,
+} from "./lib/articleStore";
+import { recentCronRuns, publishedDailyCounts } from "./lib/articles";
 import { SITE, publicBaseUrl } from "./lib/siteConfig";
 import { auditBunnyMirror } from "./lib/bunnyMirrorHeal";
 import { ASSESSMENTS, findAssessment } from "./lib/assessments";
@@ -57,13 +64,14 @@ export function registerSiteRoutes(app: Express): void {
     res.type("text/plain").send(txt);
   });
 
-  // Public REST endpoints used by the React frontend (no auth needed)
+  // Public REST endpoints. Reads happen against Bunny CDN only — the
+  // database is never touched on the public request path.
   app.get("/api/articles", async (_req: Request, res: Response) => {
-    const list = await listAllPublishedSlugs();
+    const list = await listPublishedFromBunny();
     res.json(list);
   });
   app.get("/api/articles/:slug", async (req: Request, res: Response) => {
-    const a = await getArticleBySlug(req.params.slug);
+    const a = await getArticleFromBunny(req.params.slug);
     if (!a) {
       res.status(404).json({ error: "not-found" });
       return;
@@ -123,13 +131,20 @@ export function registerSiteRoutes(app: Express): void {
     }
   });
 
-  // Diagnostics (used to verify cron + gate + multi-day distribution)
+  // Diagnostics. Counts come from Bunny index.json (no DB). Cron runs and
+  // daily series only render when a DB is configured — if not, they're
+  // empty arrays. The public site never depends on either of them.
   app.get("/api/diagnostics", async (_req: Request, res: Response) => {
-    const [counts, cron, daily] = await Promise.all([
-      countByStatus(),
-      recentCronRuns(50),
-      publishedDailyCounts(),
-    ]);
+    const counts = await countByStatusFromBunny();
+    let cron: any[] = [];
+    let daily: any[] = [];
+    if (process.env.DATABASE_URL) {
+      try {
+        [cron, daily] = await Promise.all([recentCronRuns(50), publishedDailyCounts()]);
+      } catch {
+        // best-effort; never block diagnostics on a DB hiccup
+      }
+    }
     res.json({
       counts,
       cron,
@@ -139,6 +154,7 @@ export function registerSiteRoutes(app: Express): void {
         OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || "https://api.deepseek.com",
         OPENAI_MODEL: process.env.OPENAI_MODEL || "deepseek-v4-pro",
         publicBaseUrl: publicBaseUrl(),
+        runtimeStore: "bunny",
       },
     });
   });
@@ -166,7 +182,7 @@ export function registerSiteRoutes(app: Express): void {
     try {
       if (url.startsWith("/articles/") && url.length > "/articles/".length) {
         const slug = url.replace(/^\/articles\//, "").split("/")[0];
-        const a = await getArticleBySlug(slug);
+        const a = await getArticleFromBunny(slug);
         if (a) {
           const ogImg = a.heroUrl || `${SITE.bunny.pullZone}/library/lib-01.webp`;
           injection = [
