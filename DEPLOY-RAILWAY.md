@@ -46,7 +46,7 @@ The asterisks mark must-have variables; the rest have safe defaults.
 | `AMAZON_TAG` * | `spankyspinola-20` | Affiliate tag attached to every Amazon search-link in articles, herbs, and tools. |
 | `FAL_KEY` | (provided in env block) | Reserved for image-generation jobs (FAL). The cron does not call FAL by default; this key is only consumed by ad-hoc imagery scripts. |
 | `GH_PAT` | (provided in env block) | Used by repo-management scripts (push, release tagging). Not consumed by the running web service at runtime. |
-| `PUBLISHED_CAP` | `100` | Hard ceiling on published articles. The cron stops releasing new pieces when reached. |
+| `PUBLISHED_CAP` | (unset) | Optional. Leave unset for **no cap** (the publisher will keep releasing queued items every scheduled slot indefinitely). Set to a positive integer if you ever want to re-introduce a ceiling without a code change. |
 | `BUNNY_API_KEY` | (Bunny storage zone password) | Required for the cron to upload `articles/<slug>.json` and any new imagery to the `perimenopause` storage zone. Read-only browsing of `perimenopause.b-cdn.net` does **not** require this key. |
 | `BUNNY_STORAGE_ZONE` | `perimenopause` | Storage zone name. Defaults are baked into `siteConfig.ts`; only override if you migrate. |
 | `BUNNY_STORAGE_HOST` | `ny.storage.bunnycdn.com` | NY region storage host. |
@@ -80,6 +80,8 @@ In the app service **Settings → Networking → Custom Domain**, add `perimenop
 - `https://perimenopausepanic.com/api/diagnostics` → cron history with multi-day distribution
 - `https://perimenopause.b-cdn.net/articles/<slug>.json` → each published article is mirrored as a static JSON artifact on Bunny (auto-uploaded by the publisher cron, plus a one-shot `pnpm tsx server/scripts/backfillArticleJson.ts` to refresh the whole corpus on demand)
 
-## 7. Publish cap
+## 7. Publishing throughput
 
-The cron will only release queued articles up to `PUBLISHED_CAP` (default `100`). Today the corpus has 30 published and 500 queued, so the publisher will release one article per scheduled slot until it hits 100, then stop. To raise the ceiling later, just bump `PUBLISHED_CAP`.
+The 100-article cap has been removed. By default `PUBLISHED_CAP` is unset and the publisher runs without a ceiling, releasing one queued article per scheduled slot for as long as the queue has items (currently 500 queued behind the 30 published). Today's schedule is five fires per day in phase 1 (07:00, 10:00, 13:00, 16:00, 19:00 UTC) and once weekday at 08:00 UTC in phase 2 — the corpus crosses into phase 2 at 60 published articles.
+
+If you ever need to throttle again, set `PUBLISHED_CAP` to a positive integer in Railway Variables. The cron checks `Number.isFinite(PUBLISHED_CAP)` before enforcing it, so the env-driven cap is fully optional.

@@ -19,12 +19,16 @@ const AUTO_GEN = (process.env.AUTO_GEN_ENABLED || "true").toLowerCase() === "tru
 const TZ = "UTC";
 
 /**
- * Hard ceiling on published articles. Once reached, the publisher stops
- * releasing queued items and stops generating fresh content. Refresh,
- * spotlight, and ASIN-health crons keep running so SEO signals remain warm.
- * Override via env PUBLISHED_CAP if you ever want to lift the gate.
+ * Published-article cap. Historically this was hard-capped at 100 to keep
+ * costs predictable while the corpus matured. The cap is now removed: the
+ * publisher will keep releasing queued items every scheduled slot with no
+ * ceiling. The env var is still read so an operator can re-introduce a cap
+ * later by setting PUBLISHED_CAP to a finite number; otherwise the value is
+ * Infinity and the cap branch in runPublisher is effectively dead code.
  */
-export const PUBLISHED_CAP = parseInt(process.env.PUBLISHED_CAP || "100", 10);
+export const PUBLISHED_CAP = process.env.PUBLISHED_CAP
+  ? parseInt(process.env.PUBLISHED_CAP, 10)
+  : Infinity;
 
 let started = false;
 
@@ -104,8 +108,10 @@ export async function runPublisher(allowedPhase: 1 | 2): Promise<{
 }> {
   const counts = await countByStatus();
   const publishedCount = counts.published || 0;
-  // Hard cap. Stop publishing once the corpus reaches the configured ceiling.
-  if (publishedCount >= PUBLISHED_CAP) {
+  // Optional cap. Only enforced when PUBLISHED_CAP is a finite number (the
+  // default is Infinity, so the cap is off by default). Set the env var to a
+  // positive integer to re-enable a ceiling without a code change.
+  if (Number.isFinite(PUBLISHED_CAP) && publishedCount >= PUBLISHED_CAP) {
     return { acted: false, reason: `published-cap-reached:${publishedCount}/${PUBLISHED_CAP}` };
   }
   const phase: 1 | 2 = publishedCount < 60 ? 1 : 2;

@@ -4,14 +4,23 @@ import { resolve } from "node:path";
 import { PUBLISHED_CAP } from "./cron";
 
 describe("Published-article cap (Railway readiness)", () => {
-  it("PUBLISHED_CAP defaults to 100", () => {
-    expect(PUBLISHED_CAP).toBe(100);
+  it("PUBLISHED_CAP defaults to Infinity (cap removed) when env is unset", () => {
+    // The default in cron.ts is Infinity; the test process does not set PUBLISHED_CAP,
+    // so the exported value must be Infinity at runtime.
+    expect(PUBLISHED_CAP).toBe(Infinity);
   });
 
-  it("cron.ts gates runPublisher behind PUBLISHED_CAP", () => {
+  it("cron.ts only enforces the cap when PUBLISHED_CAP is a finite number", () => {
     const src = readFileSync(resolve(__dirname, "cron.ts"), "utf8");
-    expect(src).toMatch(/publishedCount\s*>=\s*PUBLISHED_CAP/);
+    // Guarded by Number.isFinite so Infinity (the default) does not trip the branch.
+    expect(src).toMatch(/Number\.isFinite\(PUBLISHED_CAP\)\s*&&\s*publishedCount\s*>=\s*PUBLISHED_CAP/);
     expect(src).toMatch(/published-cap-reached/);
+  });
+
+  it("operators can still re-introduce a finite cap via PUBLISHED_CAP env", () => {
+    const src = readFileSync(resolve(__dirname, "cron.ts"), "utf8");
+    expect(src).toMatch(/process\.env\.PUBLISHED_CAP/);
+    expect(src).toMatch(/parseInt\(process\.env\.PUBLISHED_CAP/);
   });
 });
 
@@ -75,7 +84,6 @@ describe("Railway deployment artifacts (Railpack-only)", () => {
     const f = readFileSync(resolve(root, "DEPLOY-RAILWAY.md"), "utf8");
     expect(f).toMatch(/DATABASE_URL/);
     expect(f).toMatch(/OPENAI_API_KEY/);
-    expect(f).toMatch(/PUBLISHED_CAP/);
     expect(f).toMatch(/AUTO_GEN_ENABLED/);
     expect(f).toMatch(/BUNNY_PULL_ZONE/);
     expect(f).toMatch(/Railpack/);
