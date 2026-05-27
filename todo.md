@@ -84,3 +84,13 @@
 - [x] Run pnpm build clean
 - [x] webdev_save_checkpoint
 - [x] Force-push to peacefulgeek/perimenopause-panic main
+
+## Round 6 — Articles as JSON on Bunny + env contract sync
+- [x] Add Bunny JSON uploader (storage zone perimenopause, host ny.storage.bunnycdn.com)
+- [x] On publish (cron + manual), upload articles/<slug>.json to Bunny so /articles/<slug>.json is a static CDN artifact
+- [x] Backfill all currently-published articles to Bunny as JSON (30/30 ok)
+- [x] Update DEPLOY-RAILWAY.md env contract to match user's env block exactly (NODE_ENV, AUTO_GEN_ENABLED, AMAZON_TAG, JWT_SECRET, OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL, FAL_KEY, GH_PAT)
+- [x] Tests: assert uploader payload shape, assert publisher hooks the upload, assert env contract doc lists all required keys (46/46 pass)
+- [x] pnpm test passes (46/46); pnpm build clean
+- [x] webdev_save_checkpoint
+- [x] Force-push to peacefulgeek/perimenopause-panic main and report SHA

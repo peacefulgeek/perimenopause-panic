@@ -16,22 +16,42 @@ This project deploys to Railway using **Railpack** (Railway's default builder). 
 
 ## 3. Required environment variables
 
-Paste the following into the app service's **Variables** tab. The asterisks mark must-have variables; the rest have safe defaults.
+Paste the following into the app service's **Variables** tab exactly as listed. The block matches the canonical env contract for this site.
+
+```
+NODE_ENV="production"
+AUTO_GEN_ENABLED="true"
+AMAZON_TAG="spankyspinola-20"
+JWT_SECRET="<96-char hex secret — see secret store>"
+OPENAI_API_KEY="<DeepSeek API key — see secret store>"
+OPENAI_BASE_URL="https://api.deepseek.com"
+OPENAI_MODEL="deepseek-v4-pro"
+FAL_KEY="<FAL key — see secret store>"
+GH_PAT="<GitHub PAT — see secret store>"
+```
+
+Live secret values are kept out of the repo (GitHub secret-scanning enforces this). They live in the project's secret store (Railway Variables, plus the local skill `perimenopause-panic-bunny` for sandbox dev work).
+
+The asterisks mark must-have variables; the rest have safe defaults.
 
 | Key | Value | Notes |
 |---|---|---|
+| `NODE_ENV` * | `production` | Forces port-bind to `process.env.PORT` exactly (no port-walk) and switches Express to static-file serving. |
 | `DATABASE_URL` * | `mysql://user:pass@host:port/db` | From the Railway MySQL plugin. |
-| `OPENAI_API_KEY` * | `sk-82bdad0a1fd34987b73030504ae67080` | DeepSeek key (used through the OpenAI client). |
-| `OPENAI_BASE_URL` | `https://api.deepseek.com` | Default. |
-| `OPENAI_MODEL` | `deepseek-v4-pro` | Default. |
-| `AUTO_GEN_ENABLED` | `true` | Set to `false` to silence the cron entirely. |
+| `JWT_SECRET` * | (provided in env block) | Used for cookie signing. Already set to a strong 96-char hex. |
+| `OPENAI_API_KEY` * | (provided in env block) | DeepSeek key, consumed by the OpenAI client. |
+| `OPENAI_BASE_URL` * | `https://api.deepseek.com` | DeepSeek host. |
+| `OPENAI_MODEL` * | `deepseek-v4-pro` | Writing-engine model. |
+| `AUTO_GEN_ENABLED` * | `true` | Set to `false` to silence the cron entirely. |
+| `AMAZON_TAG` * | `spankyspinola-20` | Affiliate tag attached to every Amazon search-link in articles, herbs, and tools. |
+| `FAL_KEY` | (provided in env block) | Reserved for image-generation jobs (FAL). The cron does not call FAL by default; this key is only consumed by ad-hoc imagery scripts. |
+| `GH_PAT` | (provided in env block) | Used by repo-management scripts (push, release tagging). Not consumed by the running web service at runtime. |
 | `PUBLISHED_CAP` | `100` | Hard ceiling on published articles. The cron stops releasing new pieces when reached. |
-| `JWT_SECRET` * | random 32-byte hex | Used for cookie signing. |
-| `BUNNY_STORAGE_ZONE` | `perimenopause` | The storage zone you already created. |
-| `BUNNY_STORAGE_ENDPOINT` | `https://ny.storage.bunnycdn.com` | NY region. |
-| `BUNNY_STORAGE_API_KEY` | (your Bunny storage password) | Only needed if the cron uploads new images. |
-| `BUNNY_PULL_ZONE` | `perimenopause.b-cdn.net` | Read-only public asset host. |
-| `OWNER_OPEN_ID` | `peacefulgeek` | Used to mark the owner. |
+| `BUNNY_API_KEY` | (Bunny storage zone password) | Required for the cron to upload `articles/<slug>.json` and any new imagery to the `perimenopause` storage zone. Read-only browsing of `perimenopause.b-cdn.net` does **not** require this key. |
+| `BUNNY_STORAGE_ZONE` | `perimenopause` | Storage zone name. Defaults are baked into `siteConfig.ts`; only override if you migrate. |
+| `BUNNY_STORAGE_HOST` | `ny.storage.bunnycdn.com` | NY region storage host. |
+| `BUNNY_PULL_ZONE` | `https://perimenopause.b-cdn.net` | Public CDN host for all images, fonts, and `articles/<slug>.json`. |
+| `OWNER_OPEN_ID` | `peacefulgeek` | Marks the owner for any owner-only diagnostics. |
 | `OWNER_NAME` | `The Oracle Lover` | Cosmetic. |
 | `PORT` | (leave blank) | Railway injects this automatically; the server reads `process.env.PORT` and falls back to `8080` in production. |
 
@@ -58,6 +78,7 @@ In the app service **Settings → Networking → Custom Domain**, add `perimenop
 - `https://perimenopausepanic.com/robots.txt` → allows GPTBot, ClaudeBot, PerplexityBot, Google-Extended
 - `https://perimenopausepanic.com/api/articles` → 30 published articles
 - `https://perimenopausepanic.com/api/diagnostics` → cron history with multi-day distribution
+- `https://perimenopause.b-cdn.net/articles/<slug>.json` → each published article is mirrored as a static JSON artifact on Bunny (auto-uploaded by the publisher cron, plus a one-shot `pnpm tsx server/scripts/backfillArticleJson.ts` to refresh the whole corpus on demand)
 
 ## 7. Publish cap
 

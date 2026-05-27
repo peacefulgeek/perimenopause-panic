@@ -12,6 +12,8 @@ import { CATALOG } from "./lib/affiliate";
 import { assignHeroImage } from "./lib/bunny";
 import { ARTICLE_BLUEPRINTS } from "./lib/blueprints";
 import { runQualityGate } from "./lib/qualityGate";
+import { uploadArticleJson } from "./lib/articleJson";
+import { getArticleBySlug } from "./lib/articles";
 
 const AUTO_GEN = (process.env.AUTO_GEN_ENABLED || "true").toLowerCase() === "true";
 const TZ = "UTC";
@@ -114,6 +116,12 @@ export async function runPublisher(allowedPhase: 1 | 2): Promise<{
   const queued = await pickNextQueuedSlug();
   if (queued) {
     await publishArticle(queued.id, new Date());
+    // Mirror the published row to Bunny as articles/<slug>.json (best-effort).
+    const fresh = await getArticleBySlug(queued.slug);
+    if (fresh) {
+      const up = await uploadArticleJson(fresh);
+      if (!up.ok) console.warn(`[cron] bunny-json-upload failed for ${queued.slug}: ${up.reason}`);
+    }
     return { acted: true, publishedSlug: queued.slug };
   }
   // No queue: generate fresh from the next blueprint we haven't used yet.
@@ -161,6 +169,12 @@ export async function runPublisher(allowedPhase: 1 | 2): Promise<{
     opener: nextBlueprint.opener,
     conclusion: nextBlueprint.conclusion,
   });
+  // Mirror the freshly-published row to Bunny as articles/<slug>.json.
+  const fresh = await getArticleBySlug(nextBlueprint.slug);
+  if (fresh) {
+    const up = await uploadArticleJson(fresh);
+    if (!up.ok) console.warn(`[cron] bunny-json-upload failed for ${nextBlueprint.slug}: ${up.reason}`);
+  }
   return { acted: true, publishedSlug: nextBlueprint.slug };
 }
 
