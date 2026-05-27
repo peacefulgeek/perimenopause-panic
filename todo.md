@@ -68,3 +68,19 @@
 - [x] Healthcheck path documented
 - [x] Env contract documented (DATABASE_URL, OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL, AUTO_GEN_ENABLED, BUNNY_*, JWT_SECRET, etc.)
 - [x] Tests pass; production build passes; final checkpoint
+
+## Round 5 — Apply 9 Railway deploy lessons before re-push
+- [x] Delete Dockerfile entirely (lessons 1, 7, 8)
+- [x] Delete nixpacks.toml entirely (lesson 1 — prevent Caddy injection, force Railpack)
+- [x] Remove healthcheck from railway.json (lesson 6)
+- [x] Use ONLY startCommand in railway.json (lesson 7)
+- [x] Add uncaughtException + unhandledRejection handlers as FIRST lines of server entry (lesson 4)
+- [x] Add httpServer.on('error') handler (lesson 4)
+- [x] Default port fallback 8080 instead of 10000 (lesson 5)
+- [x] Patches available before install — N/A once Dockerfile is gone (lesson 2)
+- [x] pnpm pinned via packageManager: pnpm@10.4.1 in package.json (lesson 3) — already exact
+- [x] DNS — user-side action only (lesson 9)
+- [x] Run pnpm test (38/38 pass)
+- [x] Run pnpm build clean
+- [x] webdev_save_checkpoint
+- [x] Force-push to peacefulgeek/perimenopause-panic main

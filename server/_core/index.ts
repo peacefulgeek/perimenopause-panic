@@ -1,3 +1,19 @@
+// --- Railway crash diagnostics (MUST be the first executable lines) ---
+// Any module loaded below this block may throw synchronously; we install handlers
+// before any other code runs so failures show up in `railway logs`.
+process.on("uncaughtException", err => {
+  // eslint-disable-next-line no-console
+  console.error("[FATAL uncaughtException]", err && (err.stack || err));
+});
+process.on("unhandledRejection", reason => {
+  // eslint-disable-next-line no-console
+  console.error(
+    "[FATAL unhandledRejection]",
+    reason instanceof Error ? reason.stack || reason.message : reason
+  );
+});
+// ---------------------------------------------------------------------
+
 import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
@@ -33,7 +49,16 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 
 async function startServer() {
   const app = express();
-  const server = createServer(app);
+  const httpServer = createServer(app);
+
+  // Server-level error handler (Railway lesson #4) — surfaces EADDRINUSE,
+  // EACCES, and any other bind failures with a clear log line instead of a
+  // silent process death.
+  httpServer.on("error", err => {
+    // eslint-disable-next-line no-console
+    console.error("[FATAL httpServer.error]", err && ((err as Error).stack || err));
+  });
+
   // FIRST middleware: WWW -> apex 301 (master scope §17)
   app.use(wwwToApexRedirect());
   // Configure body parser with larger size limit for file uploads
@@ -53,29 +78,34 @@ async function startServer() {
   );
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
-    await setupVite(app, server);
+    await setupVite(app, httpServer);
   } else {
     serveStatic(app);
   }
 
-  const preferredPort = parseInt(process.env.PORT || "3000");
+  // Railway lesson #5: default to 8080 in production (Railway's expected
+  // default) instead of 10000. Dev still walks ports starting at 3000.
+  const isProduction = process.env.NODE_ENV === "production";
+  const defaultPort = isProduction ? 8080 : 3000;
+  const preferredPort = parseInt(process.env.PORT || String(defaultPort), 10);
   // In production (Railway, Cloud Run, etc.) we MUST bind to the injected
   // PORT exactly. The dev sandbox uses port-walk so multiple sandboxes can
-  // coexist. The split below preserves both behaviors.
-  const port =
-    process.env.NODE_ENV === "production"
-      ? preferredPort
-      : await findAvailablePort(preferredPort);
+  // coexist.
+  const port = isProduction ? preferredPort : await findAvailablePort(preferredPort);
 
-  if (port !== preferredPort && process.env.NODE_ENV !== "production") {
+  if (port !== preferredPort && !isProduction) {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
+  httpServer.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
     // Start in-process cron runner (gated by AUTO_GEN_ENABLED)
     startCronRunner();
   });
 }
 
-startServer().catch(console.error);
+startServer().catch(err => {
+  // eslint-disable-next-line no-console
+  console.error("[FATAL startServer rejected]", err && (err.stack || err));
+  process.exit(1);
+});

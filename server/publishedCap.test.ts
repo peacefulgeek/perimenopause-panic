@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { PUBLISHED_CAP } from "./cron";
 
@@ -15,21 +15,23 @@ describe("Published-article cap (Railway readiness)", () => {
   });
 });
 
-describe("Railway deployment artifacts", () => {
+describe("Railway deployment artifacts (Railpack-only)", () => {
   const root = resolve(__dirname, "..");
 
-  it("ships a Dockerfile that uses node:22 and binds via pnpm start", () => {
-    const f = readFileSync(resolve(root, "Dockerfile"), "utf8");
-    expect(f).toMatch(/FROM node:22/);
-    expect(f).toMatch(/pnpm build/);
-    expect(f).toMatch(/CMD\s*\[\s*"pnpm",\s*"start"\s*\]/);
-    expect(f).toMatch(/HEALTHCHECK[\s\S]+\/health/);
+  it("does NOT ship a Dockerfile (lessons 1, 7, 8 — avoid CMD/startCommand conflict and stale cache)", () => {
+    expect(existsSync(resolve(root, "Dockerfile"))).toBe(false);
   });
 
-  it("ships a railway.json with /health healthcheck", () => {
+  it("does NOT ship a nixpacks.toml (lesson 1 — avoid Caddy injection)", () => {
+    expect(existsSync(resolve(root, "nixpacks.toml"))).toBe(false);
+  });
+
+  it("railway.json has only startCommand + restart policy, no healthcheck, no builder", () => {
     const j = JSON.parse(readFileSync(resolve(root, "railway.json"), "utf8"));
-    expect(j.deploy.healthcheckPath).toBe("/health");
     expect(j.deploy.startCommand).toBe("pnpm start");
+    expect(j.deploy.healthcheckPath).toBeUndefined();
+    expect(j.deploy.healthcheckTimeout).toBeUndefined();
+    expect(j.build).toBeUndefined();
   });
 
   it("ships a Procfile with a web process", () => {
@@ -37,10 +39,36 @@ describe("Railway deployment artifacts", () => {
     expect(f).toMatch(/^web:\s*pnpm start/m);
   });
 
-  it("server binds to process.env.PORT exactly in production", () => {
+  it("package.json pins pnpm@10.4.1 exactly via packageManager (lesson 3)", () => {
+    const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
+    expect(pkg.packageManager).toMatch(/^pnpm@10\.4\.1/);
+  });
+
+  it("server entry installs uncaughtException + unhandledRejection handlers as the first executable code (lesson 4)", () => {
     const src = readFileSync(resolve(root, "server/_core/index.ts"), "utf8");
+    expect(src).toMatch(/process\.on\("uncaughtException"/);
+    expect(src).toMatch(/process\.on\("unhandledRejection"/);
+    // Verify they appear BEFORE the first import statement.
+    const firstImportIdx = src.indexOf("import ");
+    const uncaughtIdx = src.indexOf('process.on("uncaughtException"');
+    expect(uncaughtIdx).toBeGreaterThan(-1);
+    expect(uncaughtIdx).toBeLessThan(firstImportIdx);
+  });
+
+  it("server entry attaches httpServer.on('error') handler (lesson 4)", () => {
+    const src = readFileSync(resolve(root, "server/_core/index.ts"), "utf8");
+    expect(src).toMatch(/httpServer\.on\(\s*"error"/);
+  });
+
+  it("server defaults port to 8080 in production, 3000 in dev (lesson 5)", () => {
+    const src = readFileSync(resolve(root, "server/_core/index.ts"), "utf8");
+    expect(src).toMatch(/isProduction\s*\?\s*8080\s*:\s*3000/);
     expect(src).toMatch(/process\.env\.PORT/);
-    expect(src).toMatch(/NODE_ENV\s*===\s*"production"\s*\?\s*preferredPort/);
+  });
+
+  it("server binds to process.env.PORT exactly in production (no port-walk)", () => {
+    const src = readFileSync(resolve(root, "server/_core/index.ts"), "utf8");
+    expect(src).toMatch(/isProduction\s*\?\s*preferredPort\s*:\s*await findAvailablePort/);
   });
 
   it("ships DEPLOY-RAILWAY.md with the env contract", () => {
@@ -50,5 +78,6 @@ describe("Railway deployment artifacts", () => {
     expect(f).toMatch(/PUBLISHED_CAP/);
     expect(f).toMatch(/AUTO_GEN_ENABLED/);
     expect(f).toMatch(/BUNNY_PULL_ZONE/);
+    expect(f).toMatch(/Railpack/);
   });
 });

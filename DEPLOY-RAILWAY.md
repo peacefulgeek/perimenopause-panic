@@ -1,12 +1,12 @@
 # Deploying Perimenopause Panic to Railway
 
-This project ships with a Dockerfile, a Procfile, a `railway.json`, and a `nixpacks.toml`. Railway will use the Dockerfile by default; the others are fallbacks.
+This project deploys to Railway using **Railpack** (Railway's default builder). There is intentionally no Dockerfile and no `nixpacks.toml` — both caused builder conflicts in earlier rounds (Nixpacks injecting Caddy in front of Express, Dockerfile `CMD` vs `startCommand` ambiguity, and stale build caches). `railway.json` only sets a `startCommand`; Railpack auto-detects Node + pnpm from `package.json` (which pins `pnpm@10.4.1`). `Procfile` is retained as a fallback for Heroku-style platforms.
 
 ## 1. Create the service
 
 1. Push the repo to GitHub (`peacefulgeek/perimenopause-panic`).
 2. In Railway, **New Project → Deploy from GitHub repo** and select that repo.
-3. Railway detects the `Dockerfile` and `railway.json` automatically. The healthcheck path is `/health`.
+3. Railway auto-detects Node + pnpm via Railpack and reads `railway.json` for the start command (`pnpm start`). There is no healthcheck configured at the Railway level — the server already exposes `/health` if you want to wire one manually in the dashboard, but the cold-start cron warm-up can exceed default healthcheck timeouts.
 
 ## 2. Provision a MySQL database
 
@@ -33,7 +33,7 @@ Paste the following into the app service's **Variables** tab. The asterisks mark
 | `BUNNY_PULL_ZONE` | `perimenopause.b-cdn.net` | Read-only public asset host. |
 | `OWNER_OPEN_ID` | `peacefulgeek` | Used to mark the owner. |
 | `OWNER_NAME` | `The Oracle Lover` | Cosmetic. |
-| `PORT` | (leave blank) | Railway injects this automatically; the server reads `process.env.PORT`. |
+| `PORT` | (leave blank) | Railway injects this automatically; the server reads `process.env.PORT` and falls back to `8080` in production. |
 
 ## 4. Run the migrations
 
