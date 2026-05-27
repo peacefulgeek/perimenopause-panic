@@ -48,10 +48,16 @@ export default function Tools() {
         <section key={cat} className="container pb-10">
           <h2 className="editorial-serif text-2xl mb-4">{cat}</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {items.map((t) => (
+            {items.map((t) => {
+              // Use a tag-bearing search URL instead of a direct /dp/<ASIN>
+              // link. Amazon search results return real, current listings
+              // even when an individual ASIN is retired, the affiliate tag
+              // still credits us, and links never 404 for the user.
+              const searchUrl = `https://www.amazon.com/s?k=${encodeURIComponent(t.name)}&tag=spankyspinola-20`;
+              return (
               <a
                 key={t.asin}
-                href={`https://www.amazon.com/dp/${t.asin}?tag=spankyspinola-20`}
+                href={searchUrl}
                 rel="nofollow sponsored noopener"
                 target="_blank"
                 className="editorial-card p-5 no-underline text-[var(--plum-text)] block"
@@ -60,10 +66,11 @@ export default function Tools() {
                 <div className="editorial-serif text-lg mt-3">{t.name}</div>
                 <p className="text-sm mt-2 text-[var(--plum-soft)]">{t.blurb}</p>
                 <div className="ui-sans uppercase text-[10px] tracking-[0.2em] mt-4 text-[var(--rose-deep)]">
-                  Read on Amazon (paid link)
+                  Find on Amazon (paid link)
                 </div>
               </a>
-            ))}
+              );
+            })}
           </div>
         </section>
       ))}

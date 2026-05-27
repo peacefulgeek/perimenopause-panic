@@ -110,4 +110,11 @@
   - [ ] Regenerate published articles to >= 1800 words (currently 1354-1376)
   - [ ] Generate unique custom hero image per article (currently 30 articles share 15 library images)
   - [ ] Run live ASIN verification from user's laptop via `scripts/asin/run.mjs`
+## Round 10 - Content polish (in-flight)
+- [ ] Triple-verify every ASIN on /herbs against Amazon (with retries/UA rotation) and write swap plan
+- [ ] Apply ASIN swaps in herbs.ts so 100% of links resolve
+- [ ] Regenerate all 30 published articles to 1800-2200 words via DeepSeek + quality gate
+- [ ] Generate one unique FAL hero image per published article (30 unique heroes)
+- [ ] Re-upload every regenerated article JSON to Bunny and rebuild articles/index.json
+- [ ] Tests + build + commit + push to GitHub
 
