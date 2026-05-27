@@ -27,6 +27,7 @@ import { serveStatic, setupVite } from "./vite";
 import { registerSiteRoutes } from "../siteRoutes";
 import { startCronRunner } from "../cron";
 import { wwwToApexRedirect } from "../middleware/wwwRedirect";
+import { bootBunnyMirrorCheck } from "../lib/bunnyMirrorHeal";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -101,6 +102,17 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
     // Start in-process cron runner (gated by AUTO_GEN_ENABLED)
     startCronRunner();
+    // Fire-and-forget: heal any missing Bunny JSON mirrors. Skipped during
+    // tests (NODE_ENV=test) and when DISABLE_BOOT_MIRROR_CHECK=1.
+    if (process.env.NODE_ENV !== "test" && process.env.DISABLE_BOOT_MIRROR_CHECK !== "1") {
+      setTimeout(() => {
+        bootBunnyMirrorCheck().catch((err) => {
+          console.warn(
+            `[bunny-mirror] boot check threw: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        });
+      }, 5000);
+    }
   });
 }
 

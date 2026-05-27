@@ -13,6 +13,7 @@ import {
 } from "./lib/aeo";
 import { getArticleBySlug, listAllPublishedSlugs, recentCronRuns, publishedDailyCounts, countByStatus } from "./lib/articles";
 import { SITE, publicBaseUrl } from "./lib/siteConfig";
+import { auditBunnyMirror } from "./lib/bunnyMirrorHeal";
 import { ASSESSMENTS, findAssessment } from "./lib/assessments";
 import { HERBS, findHerb } from "./lib/herbs";
 
@@ -104,6 +105,22 @@ export function registerSiteRoutes(app: Express): void {
     const h = findHerb(req.params.slug);
     if (!h) return void res.status(404).json({ error: "not-found" });
     res.json(h);
+  });
+
+  // Bunny mirror diagnostics — list any published article whose JSON
+  // artifact is missing from the public CDN. HEAD-only, never modifies
+  // anything. Safe to expose because the response only contains slugs
+  // that are already public.
+  app.get("/api/diagnostics/bunny-mirror", async (_req: Request, res: Response) => {
+    try {
+      const audit = await auditBunnyMirror();
+      res.json(audit);
+    } catch (err) {
+      res.status(500).json({
+        error: "audit-failed",
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
   });
 
   // Diagnostics (used to verify cron + gate + multi-day distribution)
