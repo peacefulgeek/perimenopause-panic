@@ -15,6 +15,10 @@ import { runQualityGate } from "./lib/qualityGate";
 import { uploadArticleJson } from "./lib/articleJson";
 import { getArticleBySlug } from "./lib/articles";
 import { bunnyPublishNext } from "./lib/bunnyPublisher";
+import { listPublishedFromBunny, getArticleFromBunny } from "./lib/articleStore";
+import { bunnyPut } from "./lib/bunny";
+import { callClaude } from "./lib/claude";
+import { SITE } from "./lib/siteConfig";
 
 const AUTO_GEN = (process.env.AUTO_GEN_ENABLED || "true").toLowerCase() === "true";
 const TZ = "UTC";
@@ -234,9 +238,19 @@ export async function runProductSpotlight(): Promise<{
 
 export async function runRefresh(kind: "monthly" | "quarterly", target: number): Promise<{
   refreshed: number;
+  rewritten?: number;
+  failed?: number;
 }> {
-  // Touch lastModifiedAt on the N oldest published articles so dateModified
-  // updates surface in the sitemap and JSON-LD.
+  // Bunny-only mode: actually rewrite the N oldest articles via Claude
+  // (claude-sonnet-4-6), pass them through the quality gate, and re-upload
+  // them to Bunny. This is what produces *real* freshness signals to
+  // search and answer engines, not just a touched timestamp. We cap the
+  // number per run to keep the model spend bounded.
+  if (!process.env.DATABASE_URL) {
+    return await refreshOnBunny(target);
+  }
+  // DB-backed mode: keep the legacy timestamp-touch behavior. Cron history
+  // and Drizzle counts continue to work unchanged.
   const all = await listPublishedArticles(500);
   const oldest = all.slice(-target);
   let refreshed = 0;
@@ -245,6 +259,109 @@ export async function runRefresh(kind: "monthly" | "quarterly", target: number):
     refreshed += 1;
   }
   return { refreshed };
+}
+
+async function refreshOnBunny(target: number): Promise<{ refreshed: number; rewritten: number; failed: number }> {
+  const list = await listPublishedFromBunny();
+  // oldest publishedAt first
+  const sorted = list.slice().sort((a, b) => {
+    const ta = a.publishedAt ? Date.parse(a.publishedAt) : 0;
+    const tb = b.publishedAt ? Date.parse(b.publishedAt) : 0;
+    return ta - tb;
+  });
+  const slice = sorted.slice(0, target);
+  let rewritten = 0;
+  let failed = 0;
+  for (const head of slice) {
+    try {
+      // Always read from origin via the storage zone bypass query string so
+      // we never overwrite stale edge-cached body content.
+      const a = await getArticleFromBunny(head.slug);
+      if (!a || !a.body || a.body.length < 200) {
+        failed += 1;
+        continue;
+      }
+      const sys = `You are a senior editor for Perimenopause Panic, a warm, evidence-led, 2026 publication for women in their 30s and 40s. Voice: direct, intelligent, never patronising, never therapy-speak. Never use em dashes or banned LLM words ("diving in", "navigating", "journey", "empowering", "holistic", "unleash", "ultimate guide", "in today's world"). Always write in British-flavoured plain English with American spellings. Preserve every internal link to perimenopausepanic.com and theoraclelover.com, every Amazon search-URL, every <h2>/<h3> structural heading, and every <ol>/<ul> list. Do not add em dashes. Do not include the byline ("By The Oracle Lover") inside the body — the layout renders it. Output: pure HTML body fragment, 1900–2200 words, no <html>/<body> wrapper.`;
+      const user = `Title: ${a.title}\nCategory: ${a.category}\nTags: ${(a.tags || []).join(", ")}\nMeta: ${a.metaDescription}\n\nRewrite the body below for a 2026 audience. Tighten weak paragraphs, add fresh examples and data points, surface a clearer TL;DR-friendly opening paragraph, keep the same logical structure and the same internal/outbound links, keep the existing <h2>/<h3> headings or improve them lightly. Target 1900–2200 words. Return only the new HTML body fragment.\n\n=== CURRENT BODY ===\n${a.body}`;
+      const newBody = (await callClaude({
+        system: sys,
+        user,
+        maxTokens: 8000,
+        temperature: 0.55,
+      })).trim();
+      const wc = countWords(stripTags(newBody));
+      if (wc < 1700) {
+        failed += 1;
+        continue;
+      }
+      const gate = runQualityGate({ body: newBody, wordCount: wc });
+      if (!gate.ok) {
+        failed += 1;
+        continue;
+      }
+      const nowIso = new Date().toISOString();
+      const updated = {
+        ...a,
+        body: newBody,
+        wordCount: wc,
+        readingTime: Math.max(4, Math.round(wc / 220)),
+        lastModifiedAt: nowIso,
+      } as any;
+      const up = await bunnyPut(
+        `articles/${a.slug}.json`,
+        Buffer.from(JSON.stringify(updated, null, 2), "utf8"),
+        "application/json",
+      );
+      if (!up.ok) {
+        failed += 1;
+        continue;
+      }
+      rewritten += 1;
+    } catch (e) {
+      console.error(`[refresh] failed for ${head.slug}:`, e);
+      failed += 1;
+    }
+  }
+  // Touch the index lastModifiedAt for everything we rewrote, so the sitemap
+  // and crawler hints reflect the freshness immediately.
+  if (rewritten > 0) {
+    try {
+      const idxUrl = `${SITE.bunny.pullZone}/articles/index.json?bust=${Date.now()}`;
+      const r = await fetch(idxUrl, { headers: { "Cache-Control": "no-cache" } });
+      if (r.ok) {
+        const idx: any = await r.json();
+        const touched = new Set(slice.slice(0, rewritten).map((s) => s.slug));
+        const nowIso = new Date().toISOString();
+        if (Array.isArray(idx.articles)) {
+          idx.articles = idx.articles.map((x: any) =>
+            touched.has(x.slug) ? { ...x, lastModifiedAt: nowIso } : x,
+          );
+          idx.generatedAt = nowIso;
+          await bunnyPut(
+            "articles/index.json",
+            Buffer.from(JSON.stringify(idx, null, 2), "utf8"),
+            "application/json",
+          );
+        }
+      }
+    } catch (e) {
+      console.warn("[refresh] index touch failed:", e);
+    }
+  }
+  return { refreshed: rewritten, rewritten, failed };
+}
+
+function stripTags(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function countWords(text: string): number {
+  return (text.match(/\b[A-Za-z0-9'\-]+\b/g) || []).length;
 }
 
 export async function runAsinHealth(): Promise<{

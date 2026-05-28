@@ -118,3 +118,30 @@
 - [ ] Re-upload every regenerated article JSON to Bunny and rebuild articles/index.json
 - [ ] Tests + build + commit + push to GitHub
 
+
+## Round 11 - Final Pass (BacklinkWebsites scope)
+- [x] Store CLAUDE_API_KEY secret
+- [ ] Anthropic Claude client `server/lib/claude.ts` (model `claude-sonnet-4-6`)
+- [ ] Switch `generateArticle.ts` from DeepSeek to Claude
+- [ ] Implement real `runRefresh` in `cron.ts`: rewrite body via Claude, run quality gate, upload to Bunny
+- [ ] Backdate `published_at` randomized across prior 3 months for the 30 published articles
+- [ ] Backfill bylines: credential + datetime + 1-2 sentence self-ref context per article
+- [ ] Server-rendered SEO head: canonical with utm/fbclid/gclid/mc_eid stripped, robots, OG/Twitter (article:published_time/modified_time/author/section)
+- [ ] Article JSON-LD upgrade: inLanguage, isAccessibleForFree, reviewedBy, articleSection, wordCount, image, mainEntityOfPage, Speakable
+- [ ] BreadcrumbList per article (Home, Articles, Category, Article)
+- [ ] FAQPage JSON-LD auto-extracted from question H2/H3/H4 (cap 6, only if real)
+- [ ] HowTo JSON-LD where ordered list of steps exists (mutually exclusive with MedicalCondition)
+- [ ] WebSite + Organization JSON-LD sitewide
+- [ ] AboutPage + Organization on /about; CollectionPage + ItemList on /articles
+- [ ] Person JSON-LD for the author
+- [ ] sitemap.xml ISO-8601 lastmod, newest first
+- [ ] robots.txt explicit AI crawlers (GPTBot, ChatGPT-User, OAI-SearchBot, ClaudeBot, Claude-Web, anthropic-ai, PerplexityBot, Perplexity-User, Google-Extended, Bingbot, CCBot, Applebot, Applebot-Extended, DuckAssistBot, Meta-ExternalAgent, YouBot, MistralAI-User, Cohere-AI), Sitemap+llms.txt advertised
+- [ ] /llms.txt grouped by category
+- [ ] /llms-full.txt frontmatter-delimited body corpus, Bunny-only
+- [ ] Server-rendered head verified via curl with GPTBot UA
+- [ ] Newsletter signup -> Bunny JSON `newsletter/signups.json`
+- [ ] Confirm zero paulwagner.com leakage
+- [ ] Confirm no SOVRN code (none present)
+- [ ] vitest covers Claude key, JSON-LD shape, robots, llms.txt, sitemap, head injection
+- [ ] tsc + tests + production build all clean
+- [ ] Push to GitHub via skill, no zips

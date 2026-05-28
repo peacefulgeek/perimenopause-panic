@@ -19,7 +19,7 @@
  *   pnpm tsx server/scripts/expandArticlesBunny.ts [--only=<slug>]
  */
 import "dotenv/config";
-import OpenAI from "openai";
+import { callClaude } from "../lib/claude";
 import { bunnyPut } from "../lib/bunny";
 import { SITE } from "../lib/siteConfig";
 import type { IndexJson, StoredArticle } from "../lib/articleStore";
@@ -46,12 +46,6 @@ async function getJsonFromOrigin<T>(key: string): Promise<T | null> {
 }
 const MIN_WORDS = 1800;
 const MAX_WORDS = 2200;
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-  baseURL: process.env.OPENAI_BASE_URL || "https://api.deepseek.com",
-});
-const MODEL = process.env.OPENAI_MODEL || "deepseek-v4-pro";
 
 async function getJson<T>(url: string): Promise<T | null> {
   try {
@@ -135,16 +129,12 @@ ${a.body}`;
 
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      const res = await client.chat.completions.create({
-        model: MODEL,
-        messages: [
-          { role: "system", content: sys },
-          { role: "user", content: user },
-        ],
+      const content = (await callClaude({
+        system: sys,
+        user,
         temperature: 0.7,
-        max_tokens: 8000,
-      });
-      const content = res.choices[0]?.message?.content?.trim();
+        maxTokens: 8000,
+      })).trim();
       if (!content) {
         console.warn(`  attempt ${attempt}: empty response`);
         continue;
@@ -173,8 +163,8 @@ async function main() {
     console.error("BUNNY_API_KEY missing");
     process.exit(1);
   }
-  if (!process.env.OPENAI_API_KEY) {
-    console.error("OPENAI_API_KEY missing");
+  if (!process.env.CLAUDE_API_KEY && !process.env.ANTHROPIC_API_KEY) {
+    console.error("CLAUDE_API_KEY missing");
     process.exit(1);
   }
   const argOnly = process.argv.find((s) => s.startsWith("--only="));

@@ -1,4 +1,4 @@
-import { callDeepSeek } from "./deepseek";
+import { callClaude } from "./claude";
 import { runQualityGate, countWordsFromHtml, AI_FLAGGED_WORDS, AI_FLAGGED_PHRASES } from "./qualityGate";
 import { matchProducts, type Product } from "./affiliate";
 import { SITE } from "./siteConfig";
@@ -171,7 +171,7 @@ TAGS: ${input.tags.join(", ")}
 
 Write the article now.`;
 
-  let body = await callDeepSeek({ system: sys, user });
+  let body = await callClaude({ system: sys, user });
   body = sanitizeArticleHtml(body);
 
   let wordCount = countWordsFromHtml(body);
@@ -184,7 +184,7 @@ Write the article now.`;
 ${gate.failures.map((f) => `- ${f.rule}${f.detail ? ` (${f.detail})` : ""}`).join("\n")}
 
 Rewrite the article from scratch obeying every HARD RULE above.`;
-    body = await callDeepSeek({ system: sys, user: `${user}\n\n${fix}` });
+    body = await callClaude({ system: sys, user: `${user}\n\n${fix}` });
     body = sanitizeArticleHtml(body);
     wordCount = countWordsFromHtml(body);
     gate = runQualityGate({ body, wordCount });

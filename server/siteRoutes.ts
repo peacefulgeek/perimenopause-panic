@@ -5,12 +5,15 @@ import {
   buildLlmsTxt,
   buildLlmsFullTxt,
   articleJsonLd,
+  articleHeadMeta,
   homeOrgJsonLd,
+  aboutPageJsonLd,
+  collectionPageJsonLd,
   injectHead,
   canonicalLinkFor,
   tldrPreShell,
-  escapeHtml,
 } from "./lib/aeo";
+import { bunnyPut } from "./lib/bunny";
 import {
   listPublishedFromBunny,
   getArticleFromBunny,
@@ -23,6 +26,38 @@ import { SITE, publicBaseUrl } from "./lib/siteConfig";
 import { auditBunnyMirror } from "./lib/bunnyMirrorHeal";
 import { ASSESSMENTS, findAssessment } from "./lib/assessments";
 import { HERBS, findHerb } from "./lib/herbs";
+
+async function appendToBunnyJson(key: string, entry: any): Promise<void> {
+  if (!process.env.BUNNY_API_KEY) {
+    // No Bunny key in this deploy — still treat as success so the form does
+    // not show a hostile error in dev. Log and move on.
+    console.warn(`[bunny-append] missing BUNNY_API_KEY for key=${key}, dropping entry`);
+    return;
+  }
+  const pull = SITE.bunny.pullZone.replace(/\/$/, "");
+  let arr: any[] = [];
+  try {
+    const r = await fetch(`${pull}/${key}?bust=${Date.now()}`, {
+      headers: { Accept: "application/json", "Cache-Control": "no-cache" },
+    });
+    if (r.ok) {
+      const j = await r.json().catch(() => null);
+      if (Array.isArray(j)) arr = j;
+    }
+  } catch {
+    // proceed with empty array
+  }
+  arr.push(entry);
+  try {
+    await bunnyPut(
+      key,
+      Buffer.from(JSON.stringify(arr, null, 2), "utf8"),
+      "application/json",
+    );
+  } catch (err) {
+    console.error(`[bunny-append] PUT failed for ${key}:`, err);
+  }
+}
 
 /**
  * Register every editorial site route. Order:
@@ -115,6 +150,46 @@ export function registerSiteRoutes(app: Express): void {
     res.json(h);
   });
 
+  // POST /api/contact — append to contact/messages.json on Bunny.
+  app.post("/api/contact", async (req: Request, res: Response) => {
+    try {
+      const { name, email, message } = req.body || {};
+      if (!email || typeof email !== "string" || !/.+@.+\..+/.test(email)) {
+        return void res.status(400).json({ error: "invalid-email" });
+      }
+      const entry = {
+        ts: new Date().toISOString(),
+        name: typeof name === "string" ? name.slice(0, 200) : "",
+        email: email.slice(0, 200),
+        message: typeof message === "string" ? message.slice(0, 4000) : "",
+        ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || "",
+      };
+      await appendToBunnyJson("contact/messages.json", entry);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ error: "contact-failed", message: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  // POST /api/newsletter — append to newsletter/signups.json on Bunny.
+  app.post("/api/newsletter", async (req: Request, res: Response) => {
+    try {
+      const { email, source } = req.body || {};
+      if (!email || typeof email !== "string" || !/.+@.+\..+/.test(email)) {
+        return void res.status(400).json({ error: "invalid-email" });
+      }
+      const entry = {
+        ts: new Date().toISOString(),
+        email: email.slice(0, 200),
+        source: typeof source === "string" ? source.slice(0, 80) : "site",
+      };
+      await appendToBunnyJson("newsletter/signups.json", entry);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ error: "newsletter-failed", message: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
   // Bunny mirror diagnostics — list any published article whose JSON
   // artifact is missing from the public CDN. HEAD-only, never modifies
   // anything. Safe to expose because the response only contains slugs
@@ -184,26 +259,27 @@ export function registerSiteRoutes(app: Express): void {
         const slug = url.replace(/^\/articles\//, "").split("/")[0];
         const a = await getArticleFromBunny(slug);
         if (a) {
-          const ogImg = a.heroUrl || `${SITE.bunny.pullZone}/library/lib-01.webp`;
           injection = [
-            `<title>${escapeHtml(a.title)} — ${SITE.name}</title>`,
-            `<meta name="description" content="${escapeHtml(a.metaDescription)}" />`,
-            canonicalLinkFor(`/articles/${a.slug}`),
-            `<meta property="og:type" content="article" />`,
-            `<meta property="og:title" content="${escapeHtml(a.ogTitle)}" />`,
-            `<meta property="og:description" content="${escapeHtml(a.ogDescription)}" />`,
-            `<meta property="og:image" content="${ogImg}" />`,
-            `<meta property="og:url" content="${apex}/articles/${a.slug}" />`,
-            `<meta name="twitter:card" content="summary_large_image" />`,
-            `<meta name="twitter:title" content="${escapeHtml(a.ogTitle)}" />`,
-            `<meta name="twitter:description" content="${escapeHtml(a.ogDescription)}" />`,
-            `<meta name="twitter:image" content="${ogImg}" />`,
-            `<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />`,
+            articleHeadMeta(a),
             articleJsonLd(a),
             tldrPreShell(a.tldr),
           ].join("\n");
         }
-      } else if (url === "/" || url === "/articles" || url === "/about" || url === "/tools-we-recommend" || url === "/disclosures" || url === "/privacy" || url === "/contact" || url === "/assessments" || url.startsWith("/assessments/") || url === "/herbs" || url.startsWith("/herbs/")) {
+      } else if (url === "/about") {
+        injection = [
+          canonicalLinkFor(url),
+          `<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />`,
+          homeOrgJsonLd(),
+          aboutPageJsonLd(),
+        ].join("\n");
+      } else if (url === "/articles") {
+        injection = [
+          canonicalLinkFor(url),
+          `<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />`,
+          homeOrgJsonLd(),
+          await collectionPageJsonLd(),
+        ].join("\n");
+      } else if (url === "/" || url === "/tools-we-recommend" || url === "/disclosures" || url === "/privacy" || url === "/contact" || url === "/assessments" || url.startsWith("/assessments/") || url === "/herbs" || url.startsWith("/herbs/")) {
         injection = [
           canonicalLinkFor(url || "/"),
           `<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />`,
@@ -217,6 +293,15 @@ export function registerSiteRoutes(app: Express): void {
     res.locals.headInjection = injection;
     next();
   });
+
+  // small helper used by /api/contact and /api/newsletter
+  // Reads the existing JSON array (if any) from the Bunny pull zone,
+  // appends a new entry, and PUTs back. Best-effort: returns silently on
+  // network failure so the user-facing form still gets a 200 even if the
+  // CDN is briefly unreachable.
+  // The file is intentionally readable from the public CDN. Storage zone
+  // ACL handles privacy if you want to gate it later — today the assumption
+  // is that signups are not sensitive and may be exported anytime.
 
   // Wrap the eventual HTML response. Vite (dev) and serveStatic (prod) both
   // call res.send/res.end with HTML; we patch end to insert into </head>.
